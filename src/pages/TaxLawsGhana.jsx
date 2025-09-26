@@ -210,7 +210,7 @@ const TaxLawsGhana = () => {
     }
   };
 
-  // Payment handler with retry mechanism
+  // Payment handler with retry mechanism and fallback redirect
   const handlePayment = async () => {
     if (!supabase) {
       toast.error('Authentication service unavailable.');
@@ -237,6 +237,7 @@ const TaxLawsGhana = () => {
       let response;
       while (attempts < maxAttempts) {
         try {
+          console.log(`Fetch attempt ${attempts + 1} to ${EDGE_FUNCTION_URL}`);
           response = await fetch(EDGE_FUNCTION_URL, {
             method: 'POST',
             headers: {
@@ -245,11 +246,12 @@ const TaxLawsGhana = () => {
             },
             body: JSON.stringify({ email: user.email }),
           });
+          console.log(`Fetch attempt ${attempts + 1} status: ${response.status}`);
           if (response.ok) break;
           attempts++;
           console.warn(`Fetch attempt ${attempts} failed with status: ${response.status}`);
           if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1))); // Exponential backoff
           }
         } catch (err) {
           attempts++;
@@ -261,12 +263,18 @@ const TaxLawsGhana = () => {
       }
 
       if (!response || !response.ok) {
-        const errorData = await response?.json().catch(() => ({ error: 'Failed to parse error response' }));
-        console.error('Edge function error:', errorData, 'Status:', response?.status);
-        throw new Error(errorData?.error || `Failed to initialize payment: HTTP error ${response?.status || 'Unknown'}`);
+        console.error('All fetch attempts failed');
+        const paymentUrl = `${WEB_PAYMENT_URL}?email=${encodeURIComponent(user.email)}`;
+        toast.error(
+          `Failed to initialize payment after ${maxAttempts} attempts. Please try again or complete payment at ${WEB_PAYMENT_URL}.`,
+          { duration: 5000 }
+        );
+        window.open(paymentUrl, '_blank');
+        throw new Error('All fetch attempts failed');
       }
 
       const result = await response.json();
+      console.log('Fetch response:', result);
       const reference = result.data?.reference;
       if (!reference) throw new Error('No transaction reference returned');
 
@@ -326,6 +334,32 @@ const TaxLawsGhana = () => {
     } catch (err) {
       console.error('Payment initialization error:', err.message);
       toast.error(`Failed to initialize payment: ${err.message || 'Please check your network and try again.'}`);
+      setLoading(false);
+    }
+  };
+
+  // Check payment status after redirect (optional)
+  const checkPaymentStatus = async () => {
+    setLoading(true);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error('User not found');
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('payment_made')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+      if (profile.payment_made) {
+        setPaymentMade(true);
+        toast.success('Account is active!');
+      } else {
+        toast.error('Your account does not currently have access. Please complete payment.');
+      }
+    } catch (error) {
+      console.error('Payment status check error:', error.message);
+      toast.error('Failed to verify account status.');
+    } finally {
       setLoading(false);
     }
   };
@@ -477,15 +511,26 @@ const TaxLawsGhana = () => {
                   : 'Inactive: Please complete the one-time payment to unlock full access.'}
               </p>
               {!paymentMade && (
-                <motion.button
-                  onClick={handlePayment}
-                  className="mt-4 w-full sm:w-auto bg-blue-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-blue-700"
-                  whileHover={{ scale: 1.05, rotate: 2 }}
-                  whileTap={{ scale: 0.95, rotate: -2 }}
-                  disabled={loading || !paystackLoaded}
-                >
-                  {paystackLoaded ? 'Pay Now (100 GHS)' : 'Loading Payment...'}
-                </motion.button>
+                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                  <motion.button
+                    onClick={handlePayment}
+                    className="w-full sm:w-auto bg-blue-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-blue-700"
+                    whileHover={{ scale: 1.05, rotate: 2 }}
+                    whileTap={{ scale: 0.95, rotate: -2 }}
+                    disabled={loading || !paystackLoaded}
+                  >
+                    {paystackLoaded ? 'Pay Now (100 GHS)' : 'Loading Payment...'}
+                  </motion.button>
+                  <motion.button
+                    onClick={checkPaymentStatus}
+                    className="w-full sm:w-auto bg-gray-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-gray-700"
+                    whileHover={{ scale: 1.05, rotate: 2 }}
+                    whileTap={{ scale: 0.95, rotate: -2 }}
+                    disabled={loading}
+                  >
+                    Check Access
+                  </motion.button>
+                </div>
               )}
             </div>
             <motion.button
