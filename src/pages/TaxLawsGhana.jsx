@@ -84,7 +84,6 @@ const TaxLaws = () => {
 
   // Load Paystack script, preload fonts, and initialize animations
   useEffect(() => {
-    // Preload font to avoid SplitText warning
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'font';
@@ -114,7 +113,7 @@ const TaxLaws = () => {
         }
       };
     }
-    animateText(headerRef, 'Tax Laws Account', 'chars');
+    animateText(headerRef, 'Tax Laws - Ghana Account', 'chars');
     animateText(loginTitleRef, 'Log In', 'words', 50, 0.5);
     animateText(signupTitleRef, 'Sign Up', 'words', 50, 0.5);
     if (user) {
@@ -240,14 +239,13 @@ const TaxLaws = () => {
       window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: user.email,
-        amount: 10000, // 100 GHS in kobo
+        amount: 10000,
         currency: 'GHS',
         ref: reference,
         channels: ['card', 'bank', 'ussd', 'mobile_money'],
         callback: async (response) => {
           try {
             console.log('Paystack callback:', response);
-            // Retry verification with up to 3 attempts
             let attempts = 0;
             const maxAttempts = 3;
             let verifyResponse;
@@ -267,7 +265,7 @@ const TaxLaws = () => {
                 attempts++;
                 console.warn(`Verification attempt ${attempts} failed with status: ${verifyResponse.status}`);
                 if (attempts < maxAttempts) {
-                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1))); // Exponential backoff
+                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1)));
                 }
               } catch (err) {
                 attempts++;
@@ -352,44 +350,86 @@ const TaxLaws = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex flex-col items-center p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
       <Toaster
         position="top-center"
         toastOptions={{
-          style: { fontSize: '14px', padding: '12px 20px', borderRadius: '8px', maxWidth: '90%' },
-          success: { style: { background: '#059669', color: '#fff' } },
-          error: { style: { background: '#f87171', color: '#fff' } },
+          style: {
+            fontSize: '0.875rem',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '0.5rem',
+            maxWidth: '95%',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          },
+          success: { style: { background: '#10B981', color: '#fff' } },
+          error: { style: { background: '#EF4444', color: '#fff' } },
         }}
       />
-      <div className="p-4 sm:p-6 md:p-8 w-full max-w-3xl flex flex-col items-center">
+      {/* Loading Overlay */}
+      {loading && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="flex items-center space-x-2">
+            <svg
+              className="animate-spin h-6 w-6 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span className="text-white text-sm sm:text-base">Processing...</span>
+          </div>
+        </motion.div>
+      )}
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-10">
         {/* Header */}
-        <p
+        <motion.p
           ref={headerRef}
           id="header-text"
-          className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6 sm:mb-8 text-center"
+          className={`text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-6 sm:mb-8 text-center ${user ? 'mt-8' : 'mt-8'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          Tax Laws Account
-        </p>
-
-        {/* Loading State */}
-        {loading && <div className="text-sm sm:text-base text-gray-600">Loading...</div>}
+          Tax Laws - Ghana
+        </motion.p>
 
         {/* Login Section */}
         {!user && (
-          <div className="w-full space-y-6 sm:space-y-8">
-            <p
+          <div className="space-y-6">
+            <motion.p
               ref={loginTitleRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 text-center"
+              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
             >
               Log In
-            </p>
+            </motion.p>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm sm:text-base font-medium text-gray-600"
+                  className="block text-sm font-medium text-gray-700"
                 >
-                  Email
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -397,14 +437,14 @@ const TaxLaws = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                   placeholder="Enter your email"
                 />
               </div>
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm sm:text-base font-medium text-gray-600"
+                  className="block text-sm font-medium text-gray-700"
                 >
                   Password
                 </label>
@@ -414,15 +454,15 @@ const TaxLaws = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
                   placeholder="Enter your password"
                 />
               </div>
               <motion.button
                 type="submit"
-                className="w-full bg-blue-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-blue-700"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                whileTap={{ scale: 0.95, rotate: -2 }}
+                className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-300 transition duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 disabled={loading}
               >
                 Log In
@@ -433,25 +473,27 @@ const TaxLaws = () => {
 
         {/* Signup Section */}
         {!user && (
-          <div className="w-full space-y-6 sm:space-y-8 mt-6 sm:mt-8">
-            <p
+          <div className="mt-8 space-y-6">
+            <motion.p
               ref={signupTitleRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 text-center"
+              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
             >
               Sign Up
+            </motion.p>
+            <p className="text-sm text-gray-600 text-center">
+              Sign up is only available through our mobile app. Download the Tax Laws - Ghana app from the App Store or Google Play to create an account.
             </p>
-            <p className="text-sm sm:text-base text-gray-600 text-center">
-              Sign up is only available through our mobile app. Please download the Tax Laws app from
-              the App Store or Google Play to create an account.
-            </p>
-            <div className="mt-4 flex space-x-4 justify-center">
+            <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center">
               <motion.a
                 href="https://www.apple.com/app-store/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gray-800 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-gray-900"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                whileTap={{ scale: 0.95, rotate: -2 }}
+                className="bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 App Store
               </motion.a>
@@ -459,9 +501,9 @@ const TaxLaws = () => {
                 href="https://play.google.com/store"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gray-800 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-gray-900"
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                whileTap={{ scale: 0.95, rotate: -2 }}
+                className="bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Google Play
               </motion.a>
@@ -471,49 +513,100 @@ const TaxLaws = () => {
 
         {/* Dashboard Section */}
         {user && (
-          <div className="w-full space-y-6 sm:space-y-8">
-            <p
+          <motion.div
+            className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-6 rounded-xl shadow-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.p
               ref={welcomeRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 text-center"
+              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
             >
               Welcome, {user.email}
-            </p>
-            <p className="text-sm sm:text-base text-gray-600 text-center">
-              Manage your Tax Laws account below.
+            </motion.p>
+            <p className="text-sm text-gray-600 text-center">
+              Manage your Tax Laws - Ghana account below.
             </p>
             <div>
-              <p
+              <motion.p
                 ref={statusRef}
-                className="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 text-center"
+                className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
               >
                 Account Status
-              </p>
-              <p
-                className={`text-sm sm:text-base text-center ${
-                  paymentMade ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'
-                }`}
+              </motion.p>
+              <motion.div
+                className={`mt-4 p-4 rounded-lg shadow-md border border-gray-200 bg-gradient-to-r ${
+                  paymentMade ? 'from-green-50 to-green-100' : 'from-red-50 to-red-100'
+                } flex items-center justify-between`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
               >
-                {paymentMade
-                  ? 'Active: You have full access to Tax Laws.'
-                  : 'Inactive: Please complete the one-time payment to unlock full access.'}
-              </p>
+                <p
+                  className={`text-sm font-medium ${
+                    paymentMade ? 'text-green-700' : 'text-red-700'
+                  } flex-1`}
+                >
+                  {paymentMade
+                    ? 'Active: You have full access to Tax Laws - Ghana.'
+                    : 'Inactive: Please complete the one-time payment to unlock full access.'}
+                </p>
+                {paymentMade ? (
+                  <motion.svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, ease: 'easeInOut' }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </motion.svg>
+                ) : (
+                  <motion.div
+                    className="h-6 w-6 rounded-full bg-red-500"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  />
+                )}
+              </motion.div>
               {!paymentMade && (
-                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 mt-4">
                   <motion.button
                     onClick={handlePayment}
-                    className="w-full sm:w-auto bg-blue-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-blue-700"
-                    whileHover={{ scale: 1.05, rotate: 2 }}
-                    whileTap={{ scale: 0.95, rotate: -2 }}
+                    className="w-full sm:w-auto bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-300 transition duration-200"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     disabled={loading || !paystackLoaded}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
                   >
                     {paystackLoaded ? 'Pay Now (100 GHS)' : 'Loading Payment...'}
                   </motion.button>
                   <motion.button
                     onClick={checkPaymentStatus}
-                    className="w-full sm:w-auto bg-gray-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-gray-700"
-                    whileHover={{ scale: 1.05, rotate: 2 }}
-                    whileTap={{ scale: 0.95, rotate: -2 }}
+                    className="w-full sm:w-auto bg-gray-600 text-white p-3 rounded-lg font-semibold hover:bg-gray-700 disabled:bg-gray-300 transition duration-200"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     disabled={loading}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 }}
                   >
                     Check Access
                   </motion.button>
@@ -522,24 +615,27 @@ const TaxLaws = () => {
             </div>
             <motion.button
               onClick={handleLogout}
-              className="w-full sm:w-auto bg-gray-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-gray-700"
-              whileHover={{ scale: 1.05, rotate: 2 }}
-              whileTap={{ scale: 0.95, rotate: -2 }}
+              className="w-full sm:w-auto bg-gray-600 text-white p-3 rounded-lg font-semibold hover:bg-gray-700 disabled:bg-gray-300 transition duration-200"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               disabled={loading}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.5 }}
             >
               Log Out
             </motion.button>
-          </div>
+          </motion.div>
         )}
 
         {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-sm sm:text-base text-gray-600">Effective Date: August 30, 2025</p>
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-500">Effective Date: August 30, 2025</p>
           <motion.a
             href="/"
-            className="mt-4 inline-block bg-blue-600 text-white p-2 sm:p-3 rounded-lg font-semibold hover:bg-blue-700"
-            whileHover={{ scale: 1.05, rotate: 2 }}
-            whileTap={{ scale: 0.95, rotate: -2 }}
+            className="mt-4 inline-block bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             Back to Home
           </motion.a>
