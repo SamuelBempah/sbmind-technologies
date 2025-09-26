@@ -20,8 +20,9 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 console.log('Supabase client initialized');
 
-const EDGE_FUNCTION_URL = '/functions/v1/initialize-payment'; // Proxied path
-const VERIFY_PAYMENT_URL = '/functions/v1/verify-payment'; // Proxied path
+// Use environment variable to determine Edge Function URL
+const EDGE_FUNCTION_URL = import.meta.env.VITE_EDGE_FUNCTION_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/initialize-payment';
+const VERIFY_PAYMENT_URL = import.meta.env.VITE_VERIFY_PAYMENT_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/verify-payment';
 const PAYSTACK_PUBLIC_KEY = 'pk_test_e08fd67e82c3ab835092c9451086a9df0b0492d7';
 
 const TaxLawsGhana = () => {
@@ -76,8 +77,16 @@ const TaxLawsGhana = () => {
     );
   };
 
-  // Load Paystack script and initialize animations
+  // Load Paystack script, preload fonts, and initialize animations
   useEffect(() => {
+    // Preload font to avoid SplitText warning
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'font';
+    link.href = '/fonts/general.woff2';
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+
     if (!paystackLoaded && !window.PaystackPop) {
       const script = document.createElement('script');
       script.src = 'https://js.paystack.co/v2/inline.js';
@@ -94,6 +103,9 @@ const TaxLawsGhana = () => {
       return () => {
         if (script.parentNode) {
           script.parentNode.removeChild(script);
+        }
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
         }
       };
     }
@@ -248,7 +260,9 @@ const TaxLawsGhana = () => {
         console.warn('Falling back to local reference generation:', err.message);
         reference = `TAXLAWS_${Math.floor(Math.random() * 1000000)}`;
         console.log('Generated fallback reference:', reference);
-        toast.warn('Using fallback transaction reference due to server error.');
+        toast('Using fallback transaction reference due to server error.', {
+          style: { background: '#f59e0b', color: '#fff' },
+        });
       }
 
       console.log('Paystack reference:', reference);
@@ -319,7 +333,6 @@ const TaxLawsGhana = () => {
           style: { fontSize: '14px', padding: '12px 20px', borderRadius: '8px', maxWidth: '90%' },
           success: { style: { background: '#059669', color: '#fff' } },
           error: { style: { background: '#f87171', color: '#fff' } },
-          warning: { style: { background: '#f59e0b', color: '#fff' } },
         }}
       />
       <div className="p-4 sm:p-6 md:p-8 w-full max-w-3xl flex flex-col items-center">
