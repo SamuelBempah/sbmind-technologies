@@ -97,7 +97,7 @@ const TaxLawsGhana = () => {
       };
       script.onerror = () => {
         console.error('Failed to load Paystack script');
-        toast.error('Payment script failed to load. Check your network.');
+        toast.error('Payment script failed to load. Please check your network and try again.');
       };
       document.body.appendChild(script);
       return () => {
@@ -230,40 +230,25 @@ const TaxLawsGhana = () => {
       console.log('Initializing Paystack payment with email:', user.email);
       console.log('Edge Function URL:', EDGE_FUNCTION_URL);
 
-      let reference;
-      try {
-        const response = await fetch(EDGE_FUNCTION_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-          body: JSON.stringify({ email: user.email }),
-        });
+      const response = await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ email: user.email }),
+      });
 
-        console.log('Fetch response status:', response.status);
-        if (!response.ok) {
-          let errorData;
-          try {
-            errorData = await response.json();
-          } catch (e) {
-            errorData = { error: 'Failed to parse error response' };
-          }
-          console.error('Edge function error:', errorData, 'Status:', response.status);
-          throw new Error(errorData.error || `HTTP error ${response.status}`);
-        }
-
-        const result = await response.json();
-        reference = result.data?.reference;
-        if (!reference) throw new Error('No transaction reference returned');
-      } catch (err) {
-        console.warn('Falling back to local reference generation:', err.message);
-        reference = `TAXLAWS_${Math.floor(Math.random() * 1000000)}`;
-        console.log('Generated fallback reference:', reference);
-        toast('Using fallback transaction reference due to server error.', {
-          style: { background: '#f59e0b', color: '#fff' },
-        });
+      console.log('Fetch response status:', response.status);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+        console.error('Edge function error:', errorData, 'Status:', response.status);
+        throw new Error(errorData.error || `Failed to initialize payment: HTTP error ${response.status}`);
       }
+
+      const result = await response.json();
+      const reference = result.data?.reference;
+      if (!reference) throw new Error('No transaction reference returned');
 
       console.log('Paystack reference:', reference);
 
@@ -290,7 +275,7 @@ const TaxLawsGhana = () => {
             if (!verifyResponse.ok) {
               const verifyErrorData = await verifyResponse.json().catch(() => ({}));
               console.error('Verify error:', verifyErrorData, 'Status:', verifyResponse.status);
-              throw new Error(verifyErrorData.error || `HTTP error ${verifyResponse.status}`);
+              throw new Error(verifyErrorData.error || `Verification failed: HTTP error ${verifyResponse.status}`);
             }
 
             const verifyResult = await verifyResponse.json();
