@@ -232,6 +232,7 @@ const TaxLawsGhana = () => {
 
       let reference;
       try {
+        console.log('Attempting to fetch payment reference');
         const response = await fetch(EDGE_FUNCTION_URL, {
           method: 'POST',
           headers: {
@@ -241,7 +242,8 @@ const TaxLawsGhana = () => {
           body: JSON.stringify({ email: user.email }),
         });
 
-        console.log('Fetch response status:', response.status);
+        console.log('Initialize response status:', response.status);
+        console.log('Initialize response headers:', Object.fromEntries(response.headers));
         if (!response.ok) {
           let errorData;
           try {
@@ -249,20 +251,23 @@ const TaxLawsGhana = () => {
           } catch (e) {
             errorData = { error: 'Failed to parse error response' };
           }
-          console.error('Edge function error:', errorData, 'Status:', response.status);
+          console.error('Initialize error:', errorData, 'Status:', response.status);
           throw new Error(errorData.error || `HTTP error ${response.status}`);
         }
 
         const result = await response.json();
+        console.log('Initialize result:', result);
         reference = result.data?.reference;
         if (!reference) throw new Error('No transaction reference returned');
       } catch (err) {
-        console.warn('Falling back to local reference generation:', err.message);
-        reference = `TAXLAWS_${Math.floor(Math.random() * 1000000)}`;
-        console.log('Generated fallback reference:', reference);
-        toast('Using fallback transaction reference due to server error.', {
-          style: { background: '#f59e0b', color: '#fff' },
-        });
+        console.error('Failed to initialize payment:', err.message);
+        toast.error('Failed to initialize payment: ' + err.message);
+        throw err; // Temporarily disable fallback for debugging
+        // reference = `TAXLAWS_${Math.floor(Math.random() * 1000000)}`;
+        // console.log('Generated fallback reference:', reference);
+        // toast('Using fallback transaction reference due to server error.', {
+        //   style: { background: '#f59e0b', color: '#fff' },
+        // });
       }
 
       console.log('Paystack reference:', reference);
@@ -277,23 +282,31 @@ const TaxLawsGhana = () => {
         callback: async (response) => {
           try {
             console.log('Paystack callback:', response);
+            console.log('Attempting to verify payment with reference:', response.reference);
             const verifyResponse = await fetch(VERIFY_PAYMENT_URL, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${supabaseKey}`,
               },
-              body: JSON.stringify({ reference: response.reference }),
+              body: JSON.stringify({ reference: response.reference, email: user.email }),
             });
 
             console.log('Verify response status:', verifyResponse.status);
+            console.log('Verify response headers:', Object.fromEntries(verifyResponse.headers));
             if (!verifyResponse.ok) {
-              const verifyErrorData = await verifyResponse.json().catch(() => ({}));
+              let verifyErrorData;
+              try {
+                verifyErrorData = await verifyResponse.json();
+              } catch (e) {
+                verifyErrorData = { error: 'Failed to parse error response' };
+              }
               console.error('Verify error:', verifyErrorData, 'Status:', verifyResponse.status);
               throw new Error(verifyErrorData.error || `HTTP error ${verifyResponse.status}`);
             }
 
             const verifyResult = await verifyResponse.json();
+            console.log('Verify result:', verifyResult);
             if (verifyResult.data.status === 'success') {
               const { error } = await supabase
                 .from('profiles')
