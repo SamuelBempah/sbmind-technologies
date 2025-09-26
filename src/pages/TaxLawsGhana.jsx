@@ -20,13 +20,12 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 console.log('Supabase client initialized');
 
-// Use environment variable to determine Edge Function URL
-const EDGE_FUNCTION_URL = import.meta.env.VITE_EDGE_FUNCTION_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/initialize-payment';
-const VERIFY_PAYMENT_URL = import.meta.env.VITE_VERIFY_PAYMENT_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/verify-payment';
+// Constants
 const PAYSTACK_PUBLIC_KEY = 'pk_test_e08fd67e82c3ab835092c9451086a9df0b0492d7';
+const VERIFY_PAYMENT_URL = `${supabaseUrl}/functions/v1/verify-payment`;
 const WEB_PAYMENT_URL = 'https://sbmindtechnologies.com';
 
-const TaxLawsGhana = () => {
+const TaxLaws = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState(null);
@@ -38,6 +37,11 @@ const TaxLawsGhana = () => {
   const signupTitleRef = useRef(null);
   const welcomeRef = useRef(null);
   const statusRef = useRef(null);
+
+  // Generate unique reference for Paystack
+  const generateReference = () => {
+    return `TX_${Math.floor(Math.random() * 1000000)}`;
+  };
 
   // Animate text with GSAP SplitText
   const animateText = (ref, text, splitType = 'chars', delay = 100, duration = 0.6) => {
@@ -210,7 +214,7 @@ const TaxLawsGhana = () => {
     }
   };
 
-  // Payment handler with retry mechanism and fallback redirect
+  // Payment handler
   const handlePayment = async () => {
     if (!supabase) {
       toast.error('Authentication service unavailable.');
@@ -229,56 +233,9 @@ const TaxLawsGhana = () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) throw new Error('User not authenticated');
       console.log('Initializing Paystack payment with email:', user.email);
-      console.log('Edge Function URL:', EDGE_FUNCTION_URL);
 
-      // Retry fetch with up to 3 attempts
-      let attempts = 0;
-      const maxAttempts = 3;
-      let response;
-      while (attempts < maxAttempts) {
-        try {
-          console.log(`Fetch attempt ${attempts + 1} to ${EDGE_FUNCTION_URL}`);
-          response = await fetch(EDGE_FUNCTION_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({ email: user.email }),
-          });
-          console.log(`Fetch attempt ${attempts + 1} status: ${response.status}`);
-          if (response.ok) break;
-          attempts++;
-          console.warn(`Fetch attempt ${attempts} failed with status: ${response.status}`);
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1))); // Exponential backoff
-          }
-        } catch (err) {
-          attempts++;
-          console.warn(`Fetch attempt ${attempts} failed with error: ${err.message}`);
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-          }
-        }
-      }
-
-      if (!response || !response.ok) {
-        console.error('All fetch attempts failed');
-        const paymentUrl = `${WEB_PAYMENT_URL}?email=${encodeURIComponent(user.email)}`;
-        toast.error(
-          `Failed to initialize payment after ${maxAttempts} attempts. Please try again or complete payment at ${WEB_PAYMENT_URL}.`,
-          { duration: 5000 }
-        );
-        window.open(paymentUrl, '_blank');
-        throw new Error('All fetch attempts failed');
-      }
-
-      const result = await response.json();
-      console.log('Fetch response:', result);
-      const reference = result.data?.reference;
-      if (!reference) throw new Error('No transaction reference returned');
-
-      console.log('Paystack reference:', reference);
+      const reference = generateReference();
+      console.log('Generated Paystack reference:', reference);
 
       window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
@@ -290,23 +247,50 @@ const TaxLawsGhana = () => {
         callback: async (response) => {
           try {
             console.log('Paystack callback:', response);
-            const verifyResponse = await fetch(VERIFY_PAYMENT_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${supabaseKey}`,
-              },
-              body: JSON.stringify({ reference: response.reference }),
-            });
+            // Retry verification with up to 3 attempts
+            let attempts = 0;
+            const maxAttempts = 3;
+            let verifyResponse;
+            while (attempts < maxAttempts) {
+              try {
+                console.log(`Verification attempt ${attempts + 1} to ${VERIFY_PAYMENT_URL}`);
+                verifyResponse = await fetch(VERIFY_PAYMENT_URL, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({ reference: response.reference }),
+                });
+                console.log(`Verification attempt ${attempts + 1} status: ${verifyResponse.status}`);
+                if (verifyResponse.ok) break;
+                attempts++;
+                console.warn(`Verification attempt ${attempts} failed with status: ${verifyResponse.status}`);
+                if (attempts < maxAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempts + 1))); // Exponential backoff
+                }
+              } catch (err) {
+                attempts++;
+                console.warn(`Verification attempt ${attempts} failed with error: ${err.message}`);
+                if (attempts < maxAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+                }
+              }
+            }
 
-            console.log('Verify response status:', verifyResponse.status);
-            if (!verifyResponse.ok) {
-              const verifyErrorData = await verifyResponse.json().catch(() => ({}));
-              console.error('Verify error:', verifyErrorData, 'Status:', verifyResponse.status);
-              throw new Error(verifyErrorData.error || `Verification failed: HTTP error ${verifyResponse.status}`);
+            if (!verifyResponse || !verifyResponse.ok) {
+              console.error('All verification attempts failed');
+              const paymentUrl = `${WEB_PAYMENT_URL}?email=${encodeURIComponent(user.email)}`;
+              toast.error(
+                `Failed to verify payment after ${maxAttempts} attempts. Please complete payment at ${WEB_PAYMENT_URL}.`,
+                { duration: 5000 }
+              );
+              window.open(paymentUrl, '_blank');
+              throw new Error('All verification attempts failed');
             }
 
             const verifyResult = await verifyResponse.json();
+            console.log('Verification response:', verifyResult);
             if (verifyResult.data.status === 'success') {
               const { error } = await supabase
                 .from('profiles')
@@ -320,7 +304,10 @@ const TaxLawsGhana = () => {
             }
           } catch (err) {
             console.error('Payment verification error:', err.message);
-            toast.error('Failed to verify payment: ' + err.message);
+            toast.error(`Failed to verify payment: ${err.message}. Please complete payment at ${WEB_PAYMENT_URL}.`, {
+              duration: 5000,
+            });
+            window.open(`${WEB_PAYMENT_URL}?email=${encodeURIComponent(user.email)}`, '_blank');
           } finally {
             setLoading(false);
           }
@@ -338,7 +325,7 @@ const TaxLawsGhana = () => {
     }
   };
 
-  // Check payment status after redirect (optional)
+  // Check payment status after redirect
   const checkPaymentStatus = async () => {
     setLoading(true);
     try {
@@ -562,4 +549,4 @@ const TaxLawsGhana = () => {
   );
 };
 
-export default TaxLawsGhana;
+export default TaxLaws;
