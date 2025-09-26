@@ -24,6 +24,7 @@ console.log('Supabase client initialized');
 const EDGE_FUNCTION_URL = import.meta.env.VITE_EDGE_FUNCTION_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/initialize-payment';
 const VERIFY_PAYMENT_URL = import.meta.env.VITE_VERIFY_PAYMENT_URL || 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/verify-payment';
 const PAYSTACK_PUBLIC_KEY = 'pk_test_e08fd67e82c3ab835092c9451086a9df0b0492d7';
+const WEB_PAYMENT_URL = 'https://sbmindtechnologies.com';
 
 const TaxLawsGhana = () => {
   const [email, setEmail] = useState('');
@@ -209,7 +210,7 @@ const TaxLawsGhana = () => {
     }
   };
 
-  // Payment handler
+  // Payment handler with retry mechanism
   const handlePayment = async () => {
     if (!supabase) {
       toast.error('Authentication service unavailable.');
@@ -230,20 +231,39 @@ const TaxLawsGhana = () => {
       console.log('Initializing Paystack payment with email:', user.email);
       console.log('Edge Function URL:', EDGE_FUNCTION_URL);
 
-      const response = await fetch(EDGE_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ email: user.email }),
-      });
+      // Retry fetch with up to 3 attempts
+      let attempts = 0;
+      const maxAttempts = 3;
+      let response;
+      while (attempts < maxAttempts) {
+        try {
+          response = await fetch(EDGE_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ email: user.email }),
+          });
+          if (response.ok) break;
+          attempts++;
+          console.warn(`Fetch attempt ${attempts} failed with status: ${response.status}`);
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+          }
+        } catch (err) {
+          attempts++;
+          console.warn(`Fetch attempt ${attempts} failed with error: ${err.message}`);
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          }
+        }
+      }
 
-      console.log('Fetch response status:', response.status);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-        console.error('Edge function error:', errorData, 'Status:', response.status);
-        throw new Error(errorData.error || `Failed to initialize payment: HTTP error ${response.status}`);
+      if (!response || !response.ok) {
+        const errorData = await response?.json().catch(() => ({ error: 'Failed to parse error response' }));
+        console.error('Edge function error:', errorData, 'Status:', response?.status);
+        throw new Error(errorData?.error || `Failed to initialize payment: HTTP error ${response?.status || 'Unknown'}`);
       }
 
       const result = await response.json();
@@ -305,7 +325,7 @@ const TaxLawsGhana = () => {
       }).openIframe();
     } catch (err) {
       console.error('Payment initialization error:', err.message);
-      toast.error('Failed to initialize payment: ' + (err.message || 'Unknown error'));
+      toast.error(`Failed to initialize payment: ${err.message || 'Please check your network and try again.'}`);
       setLoading(false);
     }
   };
