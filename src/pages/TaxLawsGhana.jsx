@@ -57,40 +57,28 @@ const TaxLaws = () => {
 
     gsap.fromTo(
       targets,
-      { opacity: 0, y: 40, force3D: true },
+      { opacity: 0, y: 15 },
       {
         opacity: 1,
         y: 0,
         duration,
         stagger: delay / 1000,
-        ease: 'power3.out',
-        force3D: true,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: ref.current,
-          start: 'top 90%',
+          start: 'top 80%',
           toggleActions: 'play none none none',
           once: true,
         },
         onComplete: () => {
-          gsap.set(targets, { clearProps: 'willChange' });
           splitter.revert();
-          if (ref.current.id === 'header-text') {
-            console.log('Header animation completed!');
-          }
         },
       }
     );
   };
 
-  // Load Paystack script, preload fonts, and initialize animations
+  // Load Paystack script and initialize animations
   useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'font';
-    link.href = '/fonts/general.woff2';
-    link.crossOrigin = 'anonymous';
-    document.head.appendChild(link);
-
     if (!paystackLoaded && !window.PaystackPop) {
       const script = document.createElement('script');
       script.src = 'https://js.paystack.co/v2/inline.js';
@@ -101,19 +89,16 @@ const TaxLaws = () => {
       };
       script.onerror = () => {
         console.error('Failed to load Paystack script');
-        toast.error('Payment script failed to load. Please check your network and try again.');
+        toast.error('Payment script failed to load. Please try again.');
       };
       document.body.appendChild(script);
       return () => {
         if (script.parentNode) {
           script.parentNode.removeChild(script);
         }
-        if (link.parentNode) {
-          link.parentNode.removeChild(link);
-        }
       };
     }
-    animateText(headerRef, 'Tax Laws - Ghana Account', 'chars');
+    animateText(headerRef, 'Tax Laws - Ghana', 'chars');
     animateText(loginTitleRef, 'Log In', 'words', 50, 0.5);
     animateText(signupTitleRef, 'Sign Up', 'words', 50, 0.5);
     if (user) {
@@ -350,73 +335,72 @@ const TaxLaws = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-16 sm:pt-20 p-4 sm:p-6 font-inter">
       <Toaster
-        position="top-center"
+        position="top-right"
         toastOptions={{
           style: {
             fontSize: '0.875rem',
             padding: '0.75rem 1.25rem',
-            borderRadius: '0.5rem',
-            maxWidth: '95%',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderRadius: '0.375rem',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           },
-          success: { style: { background: '#10B981', color: '#fff' } },
-          error: { style: { background: '#EF4444', color: '#fff' } },
+          success: { style: { background: '#059669', color: '#fff' } },
+          error: { style: { background: '#DC2626', color: '#fff' } },
         }}
       />
       {/* Loading Overlay */}
       {loading && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <div className="flex items-center space-x-2">
-            <svg
-              className="animate-spin h-6 w-6 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            <span className="text-white text-sm sm:text-base">Processing...</span>
+          <div className="flex flex-col items-center space-y-3">
+            <motion.div
+              className="h-10 w-10 border-3 border-t-blue-600 border-gray-300 rounded-full animate-spin"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            />
+            <span className="text-white text-sm font-medium tracking-wide">Processing...</span>
           </div>
         </motion.div>
       )}
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6 sm:p-8 md:p-10">
+      <div className="w-full max-w-lg bg-white rounded-lg shadow-xl p-6 sm:p-8">
         {/* Header */}
-        <motion.p
-          ref={headerRef}
-          id="header-text"
-          className={`text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-6 sm:mb-8 text-center ${user ? 'mt-8' : 'mt-8'}`}
+        <motion.div
+          className="flex items-center justify-between mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          Tax Laws - Ghana
-        </motion.p>
+          <p
+            ref={headerRef}
+            id="header-text"
+            className="text-2xl font-bold text-gray-900"
+          >
+            Tax Laws - Ghana
+          </p>
+          {user && (
+            <motion.button
+              onClick={handleLogout}
+              className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Log Out
+            </motion.button>
+          )}
+        </motion.div>
 
         {/* Login Section */}
         {!user && (
           <div className="space-y-6">
             <motion.p
               ref={loginTitleRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+              className="text-xl font-semibold text-gray-800 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -437,7 +421,7 @@ const TaxLaws = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                  className="mt-1 w-full p-2.5 bg-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm"
                   placeholder="Enter your email"
                 />
               </div>
@@ -454,29 +438,34 @@ const TaxLaws = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                  className="mt-1 w-full p-2.5 bg-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-sm"
                   placeholder="Enter your password"
                 />
               </div>
-              <motion.button
-                type="submit"
-                className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-300 transition duration-200"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={loading}
-              >
-                Log In
-              </motion.button>
+              <div className="flex justify-end">
+                <motion.button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 disabled:bg-blue-300 transition duration-200 shadow-sm"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={loading}
+                >
+                  Log In
+                </motion.button>
+              </div>
+              <p className="text-sm text-gray-600 mt-4">
+                Note: Your account is tied to your device. Passwords cannot be reset. You must log out from your current device before logging into a new one.
+              </p>
             </form>
           </div>
         )}
 
         {/* Signup Section */}
         {!user && (
-          <div className="mt-8 space-y-6">
+          <div className="mt-6 pt-6 space-y-4">
             <motion.p
               ref={signupTitleRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
+              className="text-xl font-semibold text-gray-800 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -484,14 +473,14 @@ const TaxLaws = () => {
               Sign Up
             </motion.p>
             <p className="text-sm text-gray-600 text-center">
-              Sign up is only available through our mobile app. Download the Tax Laws - Ghana app from the App Store or Google Play to create an account.
+              Sign up is available through our mobile app. Download the Tax Laws - Ghana app to get started.
             </p>
-            <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center">
+            <div className="flex justify-center space-x-4">
               <motion.a
                 href="https://www.apple.com/app-store/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition duration-200"
+                className="bg-gray-800 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-900 transition duration-200 shadow-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -501,7 +490,7 @@ const TaxLaws = () => {
                 href="https://play.google.com/store"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition duration-200"
+                className="bg-gray-800 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-900 transition duration-200 shadow-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -514,128 +503,124 @@ const TaxLaws = () => {
         {/* Dashboard Section */}
         {user && (
           <motion.div
-            className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-6 rounded-xl shadow-md"
+            className="space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <motion.p
-              ref={welcomeRef}
-              className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
-              initial={{ opacity: 0, scale: 0.95 }}
+            <motion.div
+              className="bg-white rounded-lg shadow-sm p-6"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <p
+                ref={welcomeRef}
+                className="text-lg font-semibold text-gray-800"
+              >
+                Welcome, {user.email}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Manage your account and access Tax Laws - Ghana features.
+              </p>
+            </motion.div>
+            <motion.div
+              className="bg-white rounded-lg shadow-sm p-6"
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              Welcome, {user.email}
-            </motion.p>
-            <p className="text-sm text-gray-600 text-center">
-              Manage your Tax Laws - Ghana account below.
-            </p>
-            <div>
-              <motion.p
+              <p
                 ref={statusRef}
-                className="text-xl sm:text-2xl font-semibold text-gray-800 text-center"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
+                className="text-lg font-semibold text-gray-800"
               >
                 Account Status
-              </motion.p>
-              <motion.div
-                className={`mt-4 p-4 rounded-lg shadow-md border border-gray-200 bg-gradient-to-r ${
-                  paymentMade ? 'from-green-50 to-green-100' : 'from-red-50 to-red-100'
-                } flex items-center justify-between`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <p
-                  className={`text-sm font-medium ${
-                    paymentMade ? 'text-green-700' : 'text-red-700'
-                  } flex-1`}
+              </p>
+              <div className="mt-4 p-4 bg-gray-50 rounded-md flex items-center space-x-3">
+                <motion.div
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    paymentMade ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
                 >
+                  {paymentMade ? (
+                    <>
+                      <svg
+                        className="h-5 w-5 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Active
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="h-5 w-5 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                      Inactive
+                    </>
+                  )}
+                </motion.div>
+                <p className="text-sm text-gray-600 flex-1">
                   {paymentMade
-                    ? 'Active: You have full access to Tax Laws - Ghana.'
-                    : 'Inactive: Please complete the one-time payment to unlock full access.'}
+                    ? 'You have full access to Tax Laws - Ghana.'
+                    : 'Complete the one-time payment to unlock full access.'}
                 </p>
-                {paymentMade ? (
-                  <motion.svg
-                    className="h-6 w-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.5, ease: 'easeInOut' }}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </motion.svg>
-                ) : (
-                  <motion.div
-                    className="h-6 w-6 rounded-full bg-red-500"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  />
-                )}
-              </motion.div>
+              </div>
               {!paymentMade && (
-                <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 mt-4">
+                <div className="mt-4 flex space-x-4">
                   <motion.button
                     onClick={handlePayment}
-                    className="w-full sm:w-auto bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-300 transition duration-200"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 disabled:bg-blue-300 transition duration-200 shadow-sm"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={loading || !paystackLoaded}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.3 }}
                   >
                     {paystackLoaded ? 'Pay Now (100 GHS)' : 'Loading Payment...'}
                   </motion.button>
                   <motion.button
                     onClick={checkPaymentStatus}
-                    className="w-full sm:w-auto bg-gray-600 text-white p-3 rounded-lg font-semibold hover:bg-gray-700 disabled:bg-gray-300 transition duration-200"
+                    className="bg-white text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-100 disabled:text-gray-400 disabled:bg-gray-50 transition duration-200 shadow-sm"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={loading}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.4 }}
                   >
                     Check Access
                   </motion.button>
                 </div>
               )}
-            </div>
-            <motion.button
-              onClick={handleLogout}
-              className="w-full sm:w-auto bg-gray-600 text-white p-3 rounded-lg font-semibold hover:bg-gray-700 disabled:bg-gray-300 transition duration-200"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={loading}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.5 }}
-            >
-              Log Out
-            </motion.button>
+            </motion.div>
           </motion.div>
         )}
 
         {/* Footer */}
-        <div className="text-center mt-8">
+        <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">Effective Date: August 30, 2025</p>
           <motion.a
             href="/"
-            className="mt-4 inline-block bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="mt-4 inline-block text-sm text-blue-600 hover:underline"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Back to Home
           </motion.a>
