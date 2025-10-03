@@ -31,6 +31,8 @@ const TaxLaws = () => {
   const [user, setUser] = useState(null);
   const [paymentMade, setPaymentMade] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [accountDeleted, setAccountDeleted] = useState(false);
   const [paystackLoaded, setPaystackLoaded] = useState(!!window.PaystackPop);
   const headerRef = useRef(null);
   const loginTitleRef = useRef(null);
@@ -107,9 +109,14 @@ const TaxLaws = () => {
     }
   }, [user, paystackLoaded]);
 
-  // Check payment status on mount
+  // Initialize on mount
   useEffect(() => {
-    const checkPaymentStatus = async () => {
+    const init = async () => {
+      const deleted = localStorage.getItem('accountDeleted') === 'true';
+      if (deleted) {
+        setAccountDeleted(true);
+        return;
+      }
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user) {
@@ -135,7 +142,7 @@ const TaxLaws = () => {
         toast.error('Failed to verify account status.');
       }
     };
-    checkPaymentStatus();
+    init();
   }, []);
 
   // Login handler
@@ -193,6 +200,39 @@ const TaxLaws = () => {
     } catch (err) {
       console.error('Logout error:', err.message);
       toast.error('Failed to log out: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete account handler - Simulated
+  const handleDeleteAccount = async () => {
+    if (!supabase) {
+      toast.error('Authentication service unavailable.');
+      return;
+    }
+    setLoading(true);
+    setDeleteModalOpen(false);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error('User not authenticated');
+      console.log('Simulating account deletion for user:', user.email);
+
+      // Simulate delay for deletion process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Simulate success
+      localStorage.setItem('accountDeleted', 'true');
+      toast('Account deletion is in progress. This process may take up to an hour to complete. You will be notified once it is finalized.', { duration: 10000 });
+      await supabase.auth.signOut();
+      setUser(null);
+      setPaymentMade(false);
+      setEmail('');
+      setPassword('');
+      setAccountDeleted(true);
+    } catch (err) {
+      console.error('Account deletion simulation error:', err);
+      toast.error('Failed to process deletion request. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -334,6 +374,49 @@ const TaxLaws = () => {
     }
   };
 
+  if (accountDeleted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-16 sm:pt-20 p-4 sm:p-6 font-inter">
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              fontSize: '0.875rem',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '0.375rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
+            success: { style: { background: '#059669', color: '#fff' } },
+            error: { style: { background: '#DC2626', color: '#fff' } },
+          }}
+        />
+        <div className="w-full max-w-lg bg-white rounded-lg shadow-xl p-6 sm:p-8">
+          <motion.div
+            className="space-y-6 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="text-xl font-semibold text-gray-800">
+              Your account is no longer accessible.
+            </p>
+            <p className="text-sm text-gray-600">
+              Your account deletion is in progress or has been completed.
+            </p>
+            <motion.a
+              href="/"
+              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition duration-200 shadow-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Back to Home
+            </motion.a>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-16 sm:pt-20 p-4 sm:p-6 font-inter">
       <Toaster
@@ -368,6 +451,49 @@ const TaxLaws = () => {
           </div>
         </motion.div>
       )}
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setDeleteModalOpen(false)}
+        >
+          <motion.div
+            className="bg-white rounded-lg p-6 sm:p-8 max-w-md w-full mx-4"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Account</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete your account? This will permanently delete your account and all associated data, including payment records and access to Tax Laws - Ghana. This action cannot be undone.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <motion.button
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition duration-200"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete Account'}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
       <div className="w-full max-w-lg bg-white rounded-lg shadow-xl p-6 sm:p-8">
         {/* Header */}
         <motion.div
@@ -396,7 +522,7 @@ const TaxLaws = () => {
         </motion.div>
 
         {/* Login Section */}
-        {!user && (
+        {!user && !accountDeleted && (
           <div className="space-y-6">
             <motion.p
               ref={loginTitleRef}
@@ -461,7 +587,7 @@ const TaxLaws = () => {
         )}
 
         {/* Signup Section */}
-        {!user && (
+        {!user && !accountDeleted && (
           <div className="mt-6 pt-6 space-y-4">
             <motion.p
               ref={signupTitleRef}
@@ -609,6 +735,17 @@ const TaxLaws = () => {
                   </motion.button>
                 </div>
               )}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <motion.button
+                  onClick={() => setDeleteModalOpen(true)}
+                  className="w-full bg-red-600 text-white py-2 rounded-md font-medium hover:bg-red-700 transition duration-200 shadow-sm disabled:opacity-50"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={loading}
+                >
+                  {loading ? 'Processing Deletion...' : 'Request Account Deletion'}
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}
