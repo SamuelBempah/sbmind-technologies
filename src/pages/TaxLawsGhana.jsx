@@ -21,7 +21,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 console.log('Supabase client initialized');
 
 // Constants
-const PAYSTACK_PUBLIC_KEY = 'pk_test_e08fd67e82c3ab835092c9451086a9df0b0492d7';
+const PAYSTACK_PUBLIC_KEY = 'pk_live_23b761b22189926aae2d75c17e3e09de593a264f';
 const VERIFY_PAYMENT_URL = `${supabaseUrl}/functions/v1/verify-payment`;
 const WEB_PAYMENT_URL = 'https://sbmindtechnologies.com';
 
