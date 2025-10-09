@@ -101,9 +101,9 @@ const TaxLaws = () => {
       animateText(signupTitleRef, 'Sign Up', 'words', 50, 0.5);
     }
     if (user) {
-      animateText(welcomeRef, `Welcome, ${user.email}`, 'words', 50, 0.5);
-      animateText(statusRef, 'Account Status', 'words', 50, 0.5);
-    }
+  animateText(welcomeRef, `Welcome, ${user.email.split('@')[0]}!`, 'words', 50, 0.5);
+  animateText(statusRef, 'Account Status', 'words', 50, 0.5);
+}
   }, [user, paystackLoaded, activeTab]);
 
   // Initialize on mount
