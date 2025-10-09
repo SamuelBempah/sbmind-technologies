@@ -482,36 +482,36 @@ const TaxLaws = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 pb-4">
-            <motion.div
-              className="flex items-center justify-between"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <p
-                ref={headerRef}
-                className="text-2xl font-bold text-white"
-              >
-                Tax Laws - Ghana
-              </p>
-              {user && (
-                <motion.button
-                  onClick={handleLogout}
-                  className="text-white/90 hover:text-white font-semibold text-sm flex items-center space-x-1"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span>Log Out</span>
-                </motion.button>
-              )}
-            </motion.div>
-          </div>
-
+         {/* Header */}
+<div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 pb-4 relative">
+  <div className="flex justify-center mb-4">
+    <img
+      src="/icon.png"
+      alt="Logo"
+      className="w-12 h-12 rounded-full"
+    />
+  </div>
+  <motion.div
+    className="flex items-center justify-between"
+    initial={{ opacity: 0, y: -20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+  >
+    {user && (
+      <motion.button
+        onClick={handleLogout}
+        className="text-white/90 hover:text-white font-semibold text-sm flex items-center space-x-1"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Log Out</span>
+      </motion.button>
+    )}
+  </motion.div>
+</div>
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Login Section */}
