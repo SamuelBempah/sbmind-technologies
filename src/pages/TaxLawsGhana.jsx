@@ -638,7 +638,7 @@ const TaxLaws = () => {
                           App Store
                         </motion.a>
                         <motion.a
-                          href="https://play.google.com/store"
+                          href="https://play.google.com/store/apps/details?id=com.sbmindtechnologies.taxlawsghana"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 bg-black text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-800 transition duration-200 text-center"
@@ -767,7 +767,7 @@ const TaxLaws = () => {
 
             {/* Footer */}
             <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500 mb-2">Effective Date: August 30, 2025</p>
+              <p className="text-xs text-gray-500 mb-2">SBMind Technologies</p>
               <motion.a
                 href="/"
                 className="inline-block text-sm text-blue-600 hover:text-blue-800 font-semibold underline"
