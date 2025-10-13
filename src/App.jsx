@@ -12,7 +12,7 @@ import ServiceRequestForm from './pages/request';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import PayInvoice from './components/PayInvoice';
 import TaxLaws from './pages/TaxLawsGhana';
-
+import SupportPage from './pages/Support';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -231,6 +231,7 @@ function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/pay-invoice" element={<PayInvoice />} />
         <Route path="/tax-laws-ghana" element={<TaxLaws />} />
+        <Route path="/support" element={<SupportPage />} />
       </Routes>
       <CookieCard />
     </main>
