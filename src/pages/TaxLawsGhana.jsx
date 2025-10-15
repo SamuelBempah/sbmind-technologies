@@ -628,7 +628,7 @@ const TaxLaws = () => {
                       </p>
                       <div className="flex space-x-3">
                         <motion.a
-                          href="https://www.apple.com/app-store/"
+                          href="https://apps.apple.com/us/app/tax-laws-ghana/id6753916365"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 bg-black text-white py-3 px-4 rounded-xl font-semibold hover:bg-gray-800 transition duration-200 text-center"
@@ -769,12 +769,12 @@ const TaxLaws = () => {
             <div className="text-center pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-500 mb-2">SBMind Technologies</p>
               <motion.a
-                href="/"
-                className="inline-block text-sm text-blue-600 hover:text-blue-800 font-semibold underline"
+                href="/support"
+                className="inline-block text-sm text-blue-600 hover:text-blue-800 font-semibold"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Back to Home
+                Contact Support
               </motion.a>
             </div>
           </div>
