@@ -1,4 +1,4 @@
-// server.js - PRODUCTION READY FOR FLY.IO
+// server.js - ✅ FIXED FOR FLY.IO + EXPRESS 5
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -16,7 +16,7 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;  // ✅ Fly.io default port
 
-// PRODUCTION CORS - Supports local dev + production
+// PRODUCTION CORS - Updated for your app
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
@@ -27,14 +27,16 @@ app.use(cors({
       'http://localhost:5173',
       'http://127.0.0.1:5173',
       'http://localhost:3000',
-      'https://ghana-tax-support.fly.dev',  // Update with your actual app name
-      'https://*.fly.dev'  // All Fly.io apps (safe for development)
+      'https://tax-laws-ghana-support.fly.dev',  // ✅ YOUR ACTUAL APP
+      'https://*.fly.dev',                       // All Fly.io apps
+      'https://*.vercel.app',                    // Vercel frontends
+      'https://*.netlify.app'                    // Netlify frontends
     ];
     
     // Check if origin matches any allowed pattern
     if (allowedOrigins.some(allowed => 
       origin === allowed || 
-      origin.endsWith(allowed.replace(/https?:\/\//, ''))
+      (allowed.includes('*.') && origin.endsWith(allowed.split('*.')[1]))
     )) {
       return callback(null, true);
     } else {
@@ -193,7 +195,7 @@ app.post('/api/send-support', async (req, res) => {
       body: JSON.stringify({
         from: process.env.NODE_ENV === 'production' 
           ? 'Tax Laws Ghana <info@sbmindtechnologies.com>'
-          : 'Tax Laws Ghana <onboarding@resend.dev>',  // Test domain for dev
+          : 'Tax Laws Ghana <onboarding@resend.dev>',
         to: ['info@sbmindtechnologies.com'],
         subject: `🆘 New Support Request: ${name} - #${ticketId}`,
         html: supportEmailTemplate,
@@ -324,8 +326,8 @@ app.post('/api/send-support', async (req, res) => {
   }
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// ✅ FIXED: 404 handler - Uses :path* instead of * (Express 5 compatible)
+app.use('/:path*', (req, res) => {
   res.status(404).json({ 
     success: false, 
     error: 'API endpoint not found',
@@ -345,7 +347,7 @@ app.use((error, req, res, next) => {
 // PRODUCTION SERVER START
 const server = app.listen(PORT, '0.0.0.0', () => {
   const isProduction = process.env.NODE_ENV === 'production';
-  const appName = process.env.FLY_APP_NAME || 'your-app-name';
+  const appName = process.env.FLY_APP_NAME || 'tax-laws-ghana-support';  // ✅ Your actual app name
   const baseUrl = isProduction
     ? `https://${appName}.fly.dev`
     : `http://localhost:${PORT}`;
@@ -360,6 +362,9 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔑 Resend Email: ✅ Configured`);
   console.log(`💻 PID: ${process.pid}`);
   console.log('='.repeat(60));
+  
+  // Log success message for Fly.io health checks
+  console.log('✅ Server ready for requests!');
 });
 
 // Graceful shutdown handlers
@@ -390,4 +395,4 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-export default app;  // For testing
+export default app;
