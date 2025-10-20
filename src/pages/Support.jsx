@@ -7,6 +7,9 @@ import { SplitText } from 'gsap/SplitText';
 // Register GSAP plugin
 gsap.registerPlugin(SplitText);
 
+// Base URL for Supabase Edge Function
+const API_BASE_URL = 'https://nenvormxclecqlmsaarv.supabase.co/functions/v1/support-ticket';
+
 const SupportPage = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [loading, setLoading] = useState(false);
@@ -21,7 +24,7 @@ const SupportPage = () => {
   // Check server status on mount
   const checkServerStatus = async () => {
     try {
-      const response = await fetch('/api/health', { 
+      const response = await fetch(`${API_BASE_URL}/api/health`, { 
         method: 'GET', 
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(5000) // 5s timeout
@@ -123,6 +126,8 @@ const SupportPage = () => {
       const validationError = validateForm();
       if (validationError) {
         toast.error(validationError);
+        setLoading(false);
+        setSubmitStatus('idle');
         return;
       }
 
@@ -130,7 +135,7 @@ const SupportPage = () => {
       const sendingToastId = toast.loading('Sending your support request...', { id: 'sending-toast' });
 
       // Call backend API
-      const response = await fetch('/api/send-support', {
+      const response = await fetch(`${API_BASE_URL}/api/send-support`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +147,6 @@ const SupportPage = () => {
           platform: navigator.platform,
           language: navigator.language,
           timestamp: new Date().toISOString(),
-          // Frontend version for tracking
           appVersion: '1.0.0',
           screenResolution: `${window.screen.width}x${window.screen.height}`,
         }),
@@ -157,7 +161,7 @@ const SupportPage = () => {
         setTicketId(result.ticketId);
         setSubmitStatus('success');
         
-        const successMessage = ticketId 
+        const successMessage = result.ticketId 
           ? `✅ Request #${result.ticketId} sent successfully! Check your email for confirmation.`
           : '✅ Your support request has been sent successfully!';
           
@@ -609,7 +613,7 @@ const SupportPage = () => {
                       rows={5}
                       disabled={loading || serverStatus === 'offline'}
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed placeholder-gray-400 resize-y text-base"
-                      placeholder="Please describe your issue or question in as much detail as possible. Include any error messages, transaction IDs, or screenshots if available..."
+                      placeholder="Please describe your issue or question in as much detail as possible. Include any error messages, pr transaction IDs if available..."
                     />
                     <p className="text-xs text-gray-500 flex justify-between">
                       <span>{formData.message.length}/5000 characters</span>
@@ -685,7 +689,7 @@ const SupportPage = () => {
                     <ul className="text-xs text-gray-600 space-y-1">
                       <li className="flex items-start">
                         <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
-                        Include transaction IDs, error messages, or screenshots
+                        Include transaction IDs, or error messages
                       </li>
                       <li className="flex items-start">
                         <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
