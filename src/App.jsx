@@ -199,6 +199,22 @@ function App() {
       if (!document.querySelector('meta[name="description"]')) {
         document.head.appendChild(metaDescription);
       }
+    } else if (location.pathname === '/tax-laws-ghana') {
+      document.title = 'Tax Laws in Ghana | SBMind Technologies';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Explore the tax laws in Ghana and how they impact your business. Stay informed with SBMind Technologies.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
+    } else if (location.pathname === '/support') {
+      document.title = 'Support | SBMind Technologies';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Get support for your software and IT solutions from SBMind Technologies. We are here to help you succeed.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
     } else {
       document.title = 'SBMind Technologies | Software Development & IT Solutions';
       const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
