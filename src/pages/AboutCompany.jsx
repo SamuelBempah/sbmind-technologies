@@ -27,38 +27,6 @@ const AboutCompany = () => {
     transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
   };
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    "mainEntity": {
-      "@type": "Person",
-      "name": "Samuel Boakye-Bempah",
-      "alternateName": "Samuel Bempah",
-      "jobTitle": "Chief Executive Officer",
-      "description": "Samuel Boakye-Bempah is the CEO and Lead Developer at SBMind Technologies in Ghana. He is known for creating educational mobile applications like Tax Laws - Ghana and building complex IT systems like Echelon GH Management System. We also host major company systems and websites.",
-      "image": [
-        "https://www.sbmindtechnologies.com/crawl/5.png",
-        "https://www.sbmindtechnologies.com/crawl/6.jpeg",
-        "https://www.sbmindtechnologies.com/crawl/7.png",
-        "https://www.sbmindtechnologies.com/crawl/8.png"
-      ],
-      "url": "https://sbmindtechnologies.com/about-company",
-      "worksFor": {
-        "@type": "Organization",
-        "name": "SBMind Technologies",
-        "url": "https://sbmindtechnologies.com"
-      },
-      "alumniOf": {
-        "@type": "Organization",
-        "name": "Kwame Nkrumah University of Science and Technology" // Placeholder if needed
-      },
-      "sameAs": [
-        "https://www.linkedin.com/in/samuel-bempah-b97308326/",
-        "https://www.instagram.com/boakye_bempah_samuel/",
-        "https://github.com/SamuelBempah"
-      ]
-    }
-  };
 
   return (
     <div className="relative min-h-screen w-full bg-black text-white overflow-x-hidden" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -66,9 +34,6 @@ const AboutCompany = () => {
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
         <title>About SBMind Technologies & CEO Samuel Bempah</title>
         <meta name="description" content="Learn more about SBMind Technologies, our mission, and our CEO, Samuel Boakye-Bempah. We specialize in custom software development and IT consulting in Ghana." />
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
       </Helmet>
 
       {/* Hero Section */}
