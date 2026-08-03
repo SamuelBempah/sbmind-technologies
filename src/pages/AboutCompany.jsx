@@ -36,7 +36,12 @@ const AboutCompany = () => {
       "alternateName": "Samuel Bempah",
       "jobTitle": "Chief Executive Officer",
       "description": "Samuel Boakye-Bempah is the CEO and Lead Developer at SBMind Technologies in Ghana. He is known for creating educational mobile applications like Tax Laws - Ghana and building complex IT systems like Echelon GH Management System. We also host major company systems and websites.",
-      "image": "https://placehold.co/400x400?text=Samuel+Bempah",
+      "image": [
+        "https://www.sbmindtechnologies.com/crawl/5.png",
+        "https://www.sbmindtechnologies.com/crawl/6.jpeg",
+        "https://www.sbmindtechnologies.com/crawl/7.png",
+        "https://www.sbmindtechnologies.com/crawl/8.png"
+      ],
       "url": "https://sbmindtechnologies.com/about-company",
       "worksFor": {
         "@type": "Organization",
