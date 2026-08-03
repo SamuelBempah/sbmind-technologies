@@ -12,13 +12,21 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Privacy Policy */}
-        <a
-          href="/privacy-policy"
-          className="text-sm font-light hover:underline text-center md:text-right"
-        >
-          Privacy Policy
-        </a>
+        {/* Links */}
+        <div className="flex gap-4">
+          <a
+            href="/about-company"
+            className="text-sm font-light hover:underline text-center md:text-right"
+          >
+            About Company
+          </a>
+          <a
+            href="/privacy-policy"
+            className="text-sm font-light hover:underline text-center md:text-right"
+          >
+            Privacy Policy
+          </a>
+        </div>
       </div>
     </footer>
   );

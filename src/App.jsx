@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router';
 import styled from 'styled-components';
 import About from './components/About';
 import Hero from './components/Hero';
@@ -8,11 +8,13 @@ import Features from './components/Features';
 import Story from './components/Story';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import ClientMarquee from './components/ClientMarquee';
 import ServiceRequestForm from './pages/request';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import PayInvoice from './components/PayInvoice';
 import TaxLaws from './pages/TaxLawsGhana';
 import SupportPage from './pages/Support';
+import AboutCompany from './pages/AboutCompany';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -215,6 +217,14 @@ function App() {
       if (!document.querySelector('meta[name="description"]')) {
         document.head.appendChild(metaDescription);
       }
+    } else if (location.pathname === '/about-company') {
+      document.title = 'About SBMind Technologies & CEO Samuel Bempah';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Learn more about SBMind Technologies, our mission, and our CEO, Samuel Boakye-Bempah. We specialize in custom software development and IT consulting in Ghana.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
     } else {
       document.title = 'SBMind Technologies | Software Development & IT Solutions';
       const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
@@ -237,6 +247,7 @@ function App() {
               <Hero />
               <About />
               <Features />
+              <ClientMarquee />
               <Story />
               <Contact />
               <Footer />
@@ -248,6 +259,7 @@ function App() {
         <Route path="/pay-invoice" element={<PayInvoice />} />
         <Route path="/tax-laws-ghana" element={<TaxLaws />} />
         <Route path="/support" element={<SupportPage />} />
+        <Route path="/about-company" element={<AboutCompany />} />
       </Routes>
       <CookieCard />
     </main>
