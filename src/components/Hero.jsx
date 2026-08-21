@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/all";
 import { TiLocationArrow } from "react-icons/ti";
