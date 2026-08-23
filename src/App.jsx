@@ -15,6 +15,7 @@ import PayInvoice from './components/PayInvoice';
 import TaxLaws from './pages/TaxLawsGhana';
 import SupportPage from './pages/Support';
 import AboutCompany from './pages/AboutCompany';
+import AgManualPrivacyPolicy from './pages/AgManualPrivacyPolicy';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -225,6 +226,14 @@ function App() {
       if (!document.querySelector('meta[name="description"]')) {
         document.head.appendChild(metaDescription);
       }
+    } else if (location.pathname === '/ag-manual/privacy-policy') {
+      document.title = 'AG Manual Privacy Policy | SBMind Technologies';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Read the Privacy Policy for the AG Manual app by SBMind Technologies.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
     } else {
       document.title = 'SBMind Technologies | Software Development & IT Solutions';
       const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
@@ -260,6 +269,7 @@ function App() {
         <Route path="/tax-laws-ghana" element={<TaxLaws />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/about-company" element={<AboutCompany />} />
+        <Route path="/ag-manual/privacy-policy" element={<AgManualPrivacyPolicy />} />
       </Routes>
       <CookieCard />
     </main>
