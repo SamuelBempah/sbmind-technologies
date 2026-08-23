@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  const apiKey = process.env.GEMINI_API_KEY;
   // Setup CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*') // Allow all origins for the mobile app
@@ -24,33 +25,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields. Provide coverImageBase64, insideImageBase64, and userName.' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    
     if (!apiKey) {
       return res.status(500).json({ error: 'API key not configured on server' });
     }
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`;
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = `
-You are a strict AI verification assistant. The user is trying to verify they own a physical copy of the "Adult Teacher 2026" AG Sunday School manual to unlock digital access.
+    const prompt = `You are a highly strict AI security and fraud prevention assistant. The user is trying to verify they own a physical copy of the "Adult Teacher 2026" AG Sunday School manual to unlock digital access.
 
 I am providing you with two images:
 1. The front cover of the manual.
-2. The inside cover with the user's name handwritten on it.
+2. A photo of the open manual showing BOTH the inside cover and Page 1/Page 2.
 
 Your task is to verify the following STRICT RULES:
-1. Cover Verification: The first image MUST be the front cover of the "Adult Teacher 2026" AG Sunday School manual.
-2. Inside Page Verification: The second image MUST be a photo of an inside page of the manual.
-3. Exact Name Match: The name handwritten on the inside page MUST exactly match "${userName}" (case-insensitive, fuzzy match is okay if handwriting is messy, but it must be clearly the same name).
-4. Ink Required (No Pencil): The name MUST be written in dark ink (pen/marker). Pencil marks (ash/gray smudgy lines) are strictly forbidden and must be rejected.
-5. No Cancellations: There must NOT be any scratched out, scribbled over, or crossed out names on the page.
-6. Fraud Detection: The handwritten name must be written directly on the page. Reject if it looks like a sticky note, a piece of paper placed over the book, or digital text photoshopped on.
+1. Cover Verification: The first image MUST be the official front cover of the "Adult Teacher 2026" AG Sunday School manual.
+2. Full Open Spread Required: The second image MUST show the full, wide open spread of the book (typically the inside cover and the first title/copyright page). Do NOT accept a zoomed-in photo of just a name. The full pages must be visible to prove it's the actual manual.
+3. Content Matching: Inspect the text and layout of the open pages in the second image. It MUST look like the inside of the authentic AG Adult manual (e.g., copyright info, title page). If it looks like a generic notebook or a different book with a printed cover, reject it.
+4. Strict Name Match: The handwritten name on the inside page MUST exactly match ""${userName}"" (case-insensitive, fuzzy match is okay if handwriting is messy, but it must be clearly the same name).
+5. Ink Required (No Pencil): The name MUST be written in dark ink (pen/marker). Pencil marks (ash/gray smudgy lines) are strictly forbidden and must be rejected.
+6. No Cancellations (Fraud Prevention): There must NOT be any scratched out, scribbled over, erased, or crossed out names anywhere on the page. If a name has been written over, or if multiple different names are present, reject it immediately.
+7. Physical Authenticity: Reject if it looks like a sticky note, a piece of paper placed over the book, digital text photoshopped on, or a picture taken of a screen.
 
-If ALL rules are satisfied, return {"verified": true, "reason": "Verification successful."}.
-If ANY rule is violated, return {"verified": false, "reason": "Specific reason for rejection."}.
+If ALL rules are satisfied, return {"verified": true, "reason": "Verification successful."}
+If ANY rule is violated, return {"verified": false, "reason": "Specific reason for rejection."}
 
-You must return ONLY valid JSON in this exact structure, with no markdown formatting or backticks around it.
-`;
+You must return ONLY valid JSON in this exact structure, with no markdown formatting or backticks around it.`;
 
     const requestBody = {
       contents: [
@@ -108,3 +108,7 @@ You must return ONLY valid JSON in this exact structure, with no markdown format
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+
+
+
+
