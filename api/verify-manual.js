@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured on server' });
     }
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
 
     const prompt = `
 You are a strict AI verification assistant. The user is trying to verify they own a physical copy of the "Adult Teacher 2026" AG Sunday School manual to unlock digital access.
