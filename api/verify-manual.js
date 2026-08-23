@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.SBMIND_API_KEY;
   // Setup CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*') // Allow all origins for the mobile app
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API key not configured on server' });
     }
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    const sbmindEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `You are a highly strict AI security and fraud prevention assistant. The user is trying to verify they own a physical copy of the "Adult Teacher 2026" AG Sunday School manual to unlock digital access.
 
@@ -74,7 +74,7 @@ You must return ONLY valid JSON in this exact structure, with no markdown format
       ]
     };
 
-    const response = await fetch(geminiEndpoint, {
+    const response = await fetch(sbmindEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
@@ -82,8 +82,8 @@ You must return ONLY valid JSON in this exact structure, with no markdown format
 
     if (!response.ok) {
         const err = await response.text();
-        console.error("Gemini API Error:", err);
-        return res.status(500).json({ error: 'Failed to verify with Gemini AI' });
+        console.error("SBMIND COGNITIVE ENGINE API Error:", err);
+        return res.status(500).json({ error: 'Failed to verify with SBMIND COGNITIVE ENGINE' });
     }
 
     const data = await response.json();
