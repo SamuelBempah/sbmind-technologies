@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const apiKey = process.env.SBMIND_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   // Setup CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*') // Allow all origins for the mobile app
