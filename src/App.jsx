@@ -16,6 +16,7 @@ import TaxLaws from './pages/TaxLawsGhana';
 import SupportPage from './pages/Support';
 import AboutCompany from './pages/AboutCompany';
 import AgManualPrivacyPolicy from './pages/AgManualPrivacyPolicy';
+import VeltoqPrivacyPolicy from './pages/VeltoqPrivacyPolicy';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -234,6 +235,14 @@ function App() {
       if (!document.querySelector('meta[name="description"]')) {
         document.head.appendChild(metaDescription);
       }
+    } else if (location.pathname === '/veltoq/privacy-policy') {
+      document.title = 'Veltoq Privacy Policy | SBMind Technologies';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Read the Privacy Policy for the Veltoq app by SBMind Technologies.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
     } else {
       document.title = 'SBMind Technologies | Software Development & IT Solutions';
       const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
@@ -270,6 +279,7 @@ function App() {
         <Route path="/support" element={<SupportPage />} />
         <Route path="/about-company" element={<AboutCompany />} />
         <Route path="/ag-manual/privacy-policy" element={<AgManualPrivacyPolicy />} />
+        <Route path="/veltoq/privacy-policy" element={<VeltoqPrivacyPolicy />} />
       </Routes>
       <CookieCard />
     </main>
