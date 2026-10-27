@@ -18,6 +18,7 @@ import AboutCompany from './pages/AboutCompany';
 import AgManualPrivacyPolicy from './pages/AgManualPrivacyPolicy';
 import VeltoqPrivacyPolicy from './pages/VeltoqPrivacyPolicy';
 import DeadDeckLogin from './pages/DeadDeckLogin';
+import DeadDeckAdmin from './pages/DeadDeckAdmin';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -282,6 +283,7 @@ function App() {
         <Route path="/ag-manual/privacy-policy" element={<AgManualPrivacyPolicy />} />
         <Route path="/veltoq/privacy-policy" element={<VeltoqPrivacyPolicy />} />
         <Route path="/deaddeck/login" element={<DeadDeckLogin />} />
+        <Route path="/deaddeck/admin" element={<DeadDeckAdmin />} />
       </Routes>
       {!location.pathname.startsWith('/deaddeck') && <CookieCard />}
     </main>
