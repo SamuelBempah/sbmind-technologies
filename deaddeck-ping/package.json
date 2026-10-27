@@ -1,0 +1,6 @@
+{
+  "name": "deaddeck-ping",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dead Deck ping server (Vercel function)"
+}
