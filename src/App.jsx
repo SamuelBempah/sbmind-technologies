@@ -17,6 +17,7 @@ import SupportPage from './pages/Support';
 import AboutCompany from './pages/AboutCompany';
 import AgManualPrivacyPolicy from './pages/AgManualPrivacyPolicy';
 import VeltoqPrivacyPolicy from './pages/VeltoqPrivacyPolicy';
+import DeadDeckLogin from './pages/DeadDeckLogin';
 const CookieCard = () => {
   const [isCookieAccepted, setIsCookieAccepted] = useState(localStorage.getItem('cookieAccepted') === 'true');
   const [showCookie, setShowCookie] = useState(false);
@@ -256,7 +257,7 @@ function App() {
 
   return (
     <main className="relative min-h-screen w-screen overflow-x-hidden">
-      <NavBar />
+      {!location.pathname.startsWith('/deaddeck') && <NavBar />}
       <Routes>
         <Route
           path="/"
@@ -280,8 +281,9 @@ function App() {
         <Route path="/about-company" element={<AboutCompany />} />
         <Route path="/ag-manual/privacy-policy" element={<AgManualPrivacyPolicy />} />
         <Route path="/veltoq/privacy-policy" element={<VeltoqPrivacyPolicy />} />
+        <Route path="/deaddeck/login" element={<DeadDeckLogin />} />
       </Routes>
-      <CookieCard />
+      {!location.pathname.startsWith('/deaddeck') && <CookieCard />}
     </main>
   );
 }
