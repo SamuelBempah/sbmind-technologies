@@ -1,0 +1,4 @@
+{
+  "regions": ["cpt1"],
+  "rewrites": [{ "source": "/ping", "destination": "/api/ping" }]
+}
