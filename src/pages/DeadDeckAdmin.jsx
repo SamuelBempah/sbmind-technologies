@@ -6,6 +6,7 @@ import {
   doc, getDoc, setDoc, updateDoc, addDoc, deleteField, collection, query, where, orderBy, limit, getDocs,
   getCountFromServer, getAggregateFromServer, sum, Timestamp, serverTimestamp, increment,
 } from 'firebase/firestore';
+import { upload } from '@vercel/blob/client';
 import { auth, db, googleProvider } from '../lib/firebase';
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -471,8 +472,143 @@ function Ranked() {
   );
 }
 
+
+// ------------------------------------------------------------------ billboards (the screens inside the games)
+// Every billboard in a match shows these, one after another. They must be EXACTLY the sizes below so they fit the screens without
+// stretching: the page checks the file before it uploads it.
+const BB = { w: 1280, h: 720, imageMB: 2, videoMB: 15, videoSec: 20 };
+const UPLOAD_URL = 'https://deaddeck-ping.vercel.app/api/upload';
+
+const readImage = (file) => new Promise((ok, bad) => {
+  const u = URL.createObjectURL(file); const i = new Image();
+  i.onload = () => { const r = { w: i.naturalWidth, h: i.naturalHeight }; URL.revokeObjectURL(u); ok(r); };
+  i.onerror = () => { URL.revokeObjectURL(u); bad(new Error('Could not read this image.')); };
+  i.src = u;
+});
+const readVideo = (file) => new Promise((ok, bad) => {
+  const u = URL.createObjectURL(file); const v = document.createElement('video'); v.preload = 'metadata';
+  v.onloadedmetadata = () => { const r = { w: v.videoWidth, h: v.videoHeight, d: v.duration }; URL.revokeObjectURL(u); ok(r); };
+  v.onerror = () => { URL.revokeObjectURL(u); bad(new Error('Could not read this video (use an MP4 with H.264).')); };
+  v.src = u;
+});
+
+// returns '' when the file is fine, otherwise the exact reason
+async function checkBillboardFile(file) {
+  const isVideo = file.type === 'video/mp4';
+  const isImage = file.type === 'image/png' || file.type === 'image/jpeg';
+  if (!isVideo && !isImage) return `This file is ${file.type || 'an unknown type'}. Use a PNG or JPG image, or an MP4 video.`;
+  const mb = file.size / 1048576;
+  if (isImage) {
+    if (mb > BB.imageMB) return `This image is ${mb.toFixed(1)} MB. Images must be ${BB.imageMB} MB or smaller.`;
+    const { w, h } = await readImage(file);
+    if (w !== BB.w || h !== BB.h) return `This image is ${w}×${h}. Billboards need exactly ${BB.w}×${BB.h} (16:9).`;
+  } else {
+    if (mb > BB.videoMB) return `This video is ${mb.toFixed(1)} MB. Videos must be ${BB.videoMB} MB or smaller.`;
+    const { w, h, d } = await readVideo(file);
+    if (w !== BB.w || h !== BB.h) return `This video is ${w}×${h}. Billboards need exactly ${BB.w}×${BB.h} (16:9).`;
+    if (d > BB.videoSec + 0.5) return `This video is ${Math.round(d)} seconds. Videos must be ${BB.videoSec} seconds or shorter (it loops).`;
+  }
+  return '';
+}
+
+function Billboards() {
+  const [items, setItems] = useState([]);
+  const [title, setTitle] = useState('');
+  const [link, setLink] = useState('');
+  const [file, setFile] = useState(null);
+  const [fileErr, setFileErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const msg = useMsg();
+
+  const load = useCallback(async () => {
+    try {
+      const c = await getDoc(doc(db, 'config', 'live'));
+      setItems(c.exists() && Array.isArray(c.data().billboards) ? c.data().billboards : []);
+    } catch (e) { msg.bad(e.message); }
+  }, []); // eslint-disable-line
+  useEffect(() => { load(); }, [load]);
+
+  const pick = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    setFile(null); setFileErr(''); msg.ok('');
+    if (!f) return;
+    try {
+      const why = await checkBillboardFile(f);
+      if (why) setFileErr(why); else setFile(f);
+    } catch (er) { setFileErr(er.message); }
+  };
+
+  const save = async (next) => {
+    await setDoc(doc(db, 'config', 'live'), { billboards: next }, { merge: true });
+    setItems(next);
+  };
+
+  const add = async () => {
+    if (!file) return;
+    setBusy(true); msg.ok('');
+    try {
+      const blob = await upload('billboards/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_'), file, {
+        access: 'public', handleUploadUrl: UPLOAD_URL, clientPayload: await auth.currentUser.getIdToken(), contentType: file.type,
+      });
+      await save([...items, { kind: file.type === 'video/mp4' ? 'video' : 'image', url: blob.url, title: title.trim(), link: link.trim(), on: true }]);
+      msg.ok('Uploaded. It is on the billboards now (players see it the next time they open a game).');
+      setFile(null); setTitle(''); setLink(''); document.getElementById('bb-file').value = '';
+    } catch (e) { msg.bad(e.message || 'Upload failed.'); }
+    setBusy(false);
+  };
+
+  const toggle = (i) => save(items.map((x, k) => (k === i ? { ...x, on: !x.on } : x))).catch((e) => msg.bad(e.message));
+  const remove = (i) => { if (window.confirm('Remove this billboard?')) save(items.filter((_, k) => k !== i)).catch((e) => msg.bad(e.message)); };
+  const move = (i, d) => { const n = [...items]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; save(n).catch((e) => msg.bad(e.message)); };
+
+  return (
+    <>
+      <Title text="Billboards" live />
+      <div className="da-cols">
+        <div className="da-stack">
+          <div className="da-panel">
+            <h2>Upload to the billboards</h2>
+            <div className="da-card-note" style={{ color: '#b9bfd0', fontSize: 14, lineHeight: 1.6, marginBottom: 14 }}>
+              <b style={{ color: '#ffd45a' }}>Exact size: {BB.w} × {BB.h} pixels (16:9)</b> for both pictures and videos.<br />
+              Pictures: PNG or JPG, up to {BB.imageMB} MB.<br />
+              Videos: MP4 (H.264), up to {BB.videoMB} MB and {BB.videoSec} seconds, no sound needed. They loop.<br />
+              Anything that is not exactly {BB.w}×{BB.h} is refused, so it always fits the screens.
+            </div>
+            <input id="bb-file" type="file" accept="image/png,image/jpeg,video/mp4" onChange={pick} />
+            {fileErr && <div className="da-err">{fileErr}</div>}
+            {file && <div className="da-msg">Good: {file.name} is the right size.</div>}
+            <input placeholder="Title (only for you, e.g. Ranked reward)" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input placeholder="Link (optional, opens when a player taps the billboard in the menu)" value={link} onChange={(e) => setLink(e.target.value)} />
+            <button className="da-btn gold" disabled={!file || busy} onClick={add}>{busy ? 'Uploading...' : 'Upload'}</button>
+            {msg.m && <div className="da-msg">{msg.m}</div>}{msg.e && <div className="da-err">{msg.e}</div>}
+          </div>
+        </div>
+        <div className="da-panel">
+          <h2>On the billboards now ({items.filter((x) => x.on).length} of {items.length})</h2>
+          {items.length === 0 && <p style={{ color: '#7c8294', margin: 0 }}>Nothing uploaded yet. The billboards show Dead Deck's own promos until you add something.</p>}
+          {items.map((x, i) => (
+            <div key={x.url} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.06)', opacity: x.on ? 1 : 0.45 }}>
+              {x.kind === 'video'
+                ? <video src={x.url} style={{ width: 128, height: 72, borderRadius: 6, background: '#000' }} muted loop autoPlay playsInline />
+                : <img alt="" src={x.url} style={{ width: 128, height: 72, borderRadius: 6, objectFit: 'cover' }} />}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <b>{x.title || (x.kind === 'video' ? 'Video' : 'Picture')}</b>
+                <div style={{ fontSize: 12, color: '#7c8294', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.kind} {x.link ? ' / ' + x.link : ''}</div>
+              </div>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => move(i, -1)}>↑</button>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => move(i, 1)}>↓</button>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => toggle(i)}>{x.on ? 'Hide' : 'Show'}</button>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => remove(i)}>Delete</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ------------------------------------------------------------------ the page
-const TABS = [['overview', 'Overview'], ['players', 'Players & bans'], ['ranked', 'Ranked & prizes']];
+const TABS = [['overview', 'Overview'], ['players', 'Players & bans'], ['ranked', 'Ranked & prizes'], ['billboards', 'Billboards']];
 
 export default function DeadDeckAdmin() {
   const [user, setUser] = useState(undefined);
@@ -530,6 +666,7 @@ export default function DeadDeckAdmin() {
               {tab === 'overview' && <Overview />}
               {tab === 'players' && <Players admin={user} />}
               {tab === 'ranked' && <Ranked />}
+              {tab === 'billboards' && <Billboards />}
             </div>
           </>
         )}
