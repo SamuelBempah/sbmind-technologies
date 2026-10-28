@@ -495,7 +495,6 @@ function Ranked() {
               Season now: <b>{preview.id}</b>, from {idxText(preview.first)} to {idxText(preview.end)} (UTC). The next one starts on {idxText(preview.end)}.
             </p>
             <button className="da-btn gold" onClick={saveSchedule}>Save schedule</button>
-            <p style={{ margin: '12px 0 0', color: '#7c8294', fontSize: 13 }}>Needs the updated Firestore rules (Server/firestore.rules in the game project) published first, or ranked saves stop working when the season id changes.</p>
           </div>
 
           <div className="da-panel">
