@@ -28,15 +28,15 @@ const ORIGIN = 'https://www.sbmindtechnologies.com';
 const REWARDS = {
   cash: {
     label: '$10 cash',
-    title: 'FIRST TO REACH DEAD KING WINS $10',
-    text: 'Be the very first player to climb to the top rank and the $10 is yours.',
+    title: 'THE TOP DEAD KING WINS $10',
+    text: 'Reaching Dead King is not enough: at the end of the month, the Dead King with the most ranking points takes the $10.',
     image: `${ORIGIN}/deaddeck/reward-10.png`,
     local: '/deaddeck/reward-10.png',
   },
   mystery: {
     label: 'Mystery box',
-    title: 'FIRST TO REACH DEAD KING WINS A MYSTERY BOX',
-    text: 'Be the very first player to climb to the top rank and open the Dead Deck mystery box.',
+    title: 'THE TOP DEAD KING WINS A MYSTERY BOX',
+    text: 'Reaching Dead King is not enough: at the end of the month, the Dead King with the most ranking points opens the Dead Deck mystery box.',
     image: `${ORIGIN}/deaddeck/mystery-box.png`,
     local: '/deaddeck/mystery-box.png',
   },
@@ -354,7 +354,7 @@ function Ranked() {
       const rows = b.docs.map((d) => ({ uid: d.id, ...d.data() }));
       setBoard(rows);
       // who reached the top rank, earliest first (the first to get there wins the reward)
-      setTop(rows.filter((r) => (r.best || r.rp) >= TOP_RP).sort((x, y) => (x.updatedAt?.toMillis() || 0) - (y.updatedAt?.toMillis() || 0)));
+      setTop(rows.filter((r) => r.rp >= TOP_RP).sort((x, y) => (y.rp - x.rp) || ((x.updatedAt?.toMillis() || 0) - (y.updatedAt?.toMillis() || 0))));
     } catch (e) { msg.bad(e.message); }
   }, []); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
@@ -384,7 +384,7 @@ function Ranked() {
     try { await updateDoc(doc(db, 'ranked', season(), 'players', uid), { rp: Math.max(0, Number(rp) || 0) }); msg.ok('RP updated.'); await load(); } catch (e) { msg.bad(e.message); }
   };
   const crown = async (tag) => {
-    try { await setDoc(doc(db, 'config', 'live'), { topWinner: tag }, { merge: true }); setCfg({ ...cfg, topWinner: tag }); msg.ok(`${tag} is marked as the winner. The game now shows it as claimed.`); } catch (e) { msg.bad(e.message); }
+    try { await setDoc(doc(db, 'config', 'live'), { topWinner: tag }, { merge: true }); setCfg({ ...cfg, topWinner: tag }); msg.ok(`${tag} is marked as the winner. The game now shows who won.`); } catch (e) { msg.bad(e.message); }
   };
 
   return (
@@ -395,7 +395,7 @@ function Ranked() {
         <div className="da-rhead">
           <RewardCard image={previewImage} winner={cfg.topWinner} />
           <div>
-            <h2>First player to the top rank</h2>
+            <h2>Top Dead King at the end of the month</h2>
             <h3>{cfg.topRewardTitle}</h3>
             <p>{cfg.topRewardText}</p>
             <div className="da-row" style={{ marginBottom: 12 }}>
@@ -412,7 +412,7 @@ function Ranked() {
                 <input placeholder="Title" value={cfg.topRewardTitle || ''} onChange={(e) => setCfg({ ...cfg, topRewardTitle: e.target.value })} />
                 <textarea placeholder="Text" value={cfg.topRewardText || ''} onChange={(e) => setCfg({ ...cfg, topRewardText: e.target.value })} />
                 <input placeholder="Image link" value={cfg.topRewardImage || ''} onChange={(e) => setCfg({ ...cfg, topRewardImage: e.target.value })} />
-                <input placeholder="Winner's tag (once someone has won)" value={cfg.topWinner || ''} onChange={(e) => setCfg({ ...cfg, topWinner: e.target.value })} />
+                <input placeholder="Winner's tag (the top Dead King when the month ends)" value={cfg.topWinner || ''} onChange={(e) => setCfg({ ...cfg, topWinner: e.target.value })} />
               </div>
             )}
             {msg.m && <div className="da-msg">{msg.m}</div>}{msg.e && <div className="da-err">{msg.e}</div>}
@@ -439,10 +439,10 @@ function Ranked() {
 
         <div className="da-stack">
           <div className="da-panel">
-            <h2>Reached the top rank</h2>
-            {top.length === 0 ? <p style={{ margin: 0, color: '#7c8294' }}>Nobody has reached DEAD KING ({TOP_RP} RP) yet.</p> : (
+            <h2>Dead Kings, most RP first</h2>
+            {top.length === 0 ? <p style={{ margin: 0, color: '#7c8294' }}>Nobody is at DEAD KING ({TOP_RP} RP or more) yet.</p> : (
               <table className="da-table"><tbody>{top.map((r, i) => (
-                <tr key={r.uid}><td>{i === 0 ? <span className="da-pill gold">first</span> : i + 1}</td><td><b>{r.tag}</b></td>
+                <tr key={r.uid}><td>{i === 0 ? <span className="da-pill gold">leads</span> : i + 1}</td><td><b>{r.tag}</b></td><td>{r.rp} RP</td>
                   <td><button className="da-btn gold" style={{ padding: '7px 11px' }} onClick={() => crown(r.tag)}>Winner</button></td></tr>
               ))}</tbody></table>
             )}
