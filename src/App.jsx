@@ -17,6 +17,7 @@ import SupportPage from './pages/Support';
 import AboutCompany from './pages/AboutCompany';
 import AgManualPrivacyPolicy from './pages/AgManualPrivacyPolicy';
 import VeltoqPrivacyPolicy from './pages/VeltoqPrivacyPolicy';
+import DeadDeckPrivacyPolicy from './pages/DeadDeckPrivacyPolicy';
 import DeadDeckLogin from './pages/DeadDeckLogin';
 import DeadDeckAdmin from './pages/DeadDeckAdmin';
 const CookieCard = () => {
@@ -245,6 +246,14 @@ function App() {
       if (!document.querySelector('meta[name="description"]')) {
         document.head.appendChild(metaDescription);
       }
+    } else if (location.pathname === '/deaddeck/privacy-policy') {
+      document.title = 'Dead Deck Privacy Policy | SBMind Technologies';
+      const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', 'Read the Privacy Policy for the Dead Deck game by SBMind Technologies.');
+      if (!document.querySelector('meta[name="description"]')) {
+        document.head.appendChild(metaDescription);
+      }
     } else {
       document.title = 'SBMind Technologies | Software Development & IT Solutions';
       const metaDescription = document.querySelector('meta[name="description"]') || document.createElement('meta');
@@ -282,6 +291,7 @@ function App() {
         <Route path="/about-company" element={<AboutCompany />} />
         <Route path="/ag-manual/privacy-policy" element={<AgManualPrivacyPolicy />} />
         <Route path="/veltoq/privacy-policy" element={<VeltoqPrivacyPolicy />} />
+        <Route path="/deaddeck/privacy-policy" element={<DeadDeckPrivacyPolicy />} />
         <Route path="/deaddeck/login" element={<DeadDeckLogin />} />
         <Route path="/deaddeck/admin" element={<DeadDeckAdmin />} />
       </Routes>
