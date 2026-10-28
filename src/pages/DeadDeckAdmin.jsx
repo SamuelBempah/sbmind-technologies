@@ -19,6 +19,8 @@ import { auth, db, googleProvider } from '../lib/firebase';
 
 // A ranked season is a run of whole UTC months. config/live holds seasonMonths (length) and seasonStartIdx (year * 12 + month - 1 of the first
 // season). With nothing set a season is one calendar month. The game (DeadDeckFs.Season) and the Firestore rules do the very same arithmetic.
+// The season schedule needs matching Firestore rules; until they are published the panel stays hidden and a season is one calendar month.
+const SEASON_SCHEDULE = false;
 const LIVE = { months: 1, startIdx: 0 };
 const applyLive = (d) => { LIVE.months = Math.max(1, Math.min(24, Number(d?.seasonMonths) || 1)); LIVE.startIdx = Number(d?.seasonStartIdx) || 0; };
 const loadLive = async () => { try { const c = await getDoc(doc(db, 'config', 'live')); if (c.exists()) applyLive(c.data()); } catch { /* the page shows its own errors */ } };
@@ -480,6 +482,7 @@ function Ranked() {
             )}
           </div>
 
+          {SEASON_SCHEDULE && (
           <div className="da-panel">
             <h2>Season schedule</h2>
             <p style={{ margin: '0 0 10px', color: '#9aa0b4' }}>How long one ranked season lasts. When it ends, everyone starts the next one at 0 RP and the leaderboard resets by itself.</p>
@@ -496,6 +499,7 @@ function Ranked() {
             </p>
             <button className="da-btn gold" onClick={saveSchedule}>Save schedule</button>
           </div>
+          )}
 
           <div className="da-panel">
             <h2>This season's prize</h2>
