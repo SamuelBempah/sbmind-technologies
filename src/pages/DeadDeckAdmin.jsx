@@ -17,7 +17,24 @@ import { auth, db, googleProvider } from '../lib/firebase';
 //   Ranked: the first-to-the-top reward ($10 or a mystery box), this month's prize, pause, leaderboard, reset the ladder, edit RP.
 // ---------------------------------------------------------------------------------------------------------------------
 
-const season = () => { const n = new Date(); return `${n.getUTCFullYear()}-${n.getUTCMonth() + 1}`; };
+// A ranked season is a run of whole UTC months. config/live holds seasonMonths (length) and seasonStartIdx (year * 12 + month - 1 of the first
+// season). With nothing set a season is one calendar month. The game (DeadDeckFs.Season) and the Firestore rules do the very same arithmetic.
+const LIVE = { months: 1, startIdx: 0 };
+const applyLive = (d) => { LIVE.months = Math.max(1, Math.min(24, Number(d?.seasonMonths) || 1)); LIVE.startIdx = Number(d?.seasonStartIdx) || 0; };
+const loadLive = async () => { try { const c = await getDoc(doc(db, 'config', 'live')); if (c.exists()) applyLive(c.data()); } catch { /* the page shows its own errors */ } };
+const nowIdx = () => { const n = new Date(); return n.getUTCFullYear() * 12 + n.getUTCMonth(); };
+const seasonOf = (months, startIdx, now = nowIdx()) => {
+  const n = Math.max(1, months);
+  const first = (n <= 1 || now < startIdx) ? now : startIdx + n * Math.floor((now - startIdx) / n);
+  let end = first + ((n <= 1 || now < startIdx) ? 1 : n);
+  if (n > 1 && now < startIdx) end = Math.min(end, startIdx);
+  return { first, end, id: `${Math.floor(first / 12)}-${(first % 12) + 1}` };
+};
+const season = () => seasonOf(LIVE.months, LIVE.startIdx).id;
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const idxText = (i) => `1 ${MONTH_NAMES[i % 12]} ${Math.floor(i / 12)}`;
+const idxToMonthInput = (i) => `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
+const monthInputToIdx = (v) => { const m = /^(\d{4})-(\d{2})$/.exec(v || ''); return m ? Number(m[1]) * 12 + Number(m[2]) - 1 : 0; };
 const fmtDate = (t) => (t && t.toDate ? t.toDate().toLocaleString() : '-');
 const money = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
 const FOREVER_YEARS = 100;
@@ -137,6 +154,7 @@ function Overview() {
   const [err, setErr] = useState('');
   const load = useCallback(async () => {
     try {
+      await loadLive();
       const users = collection(db, 'users');
       const now = Date.now();
       const ts = (ms) => Timestamp.fromMillis(now - ms);
@@ -349,15 +367,29 @@ function Ranked() {
   const load = useCallback(async () => {
     try {
       const c = await getDoc(doc(db, 'config', 'live'));
-      if (c.exists()) setCfg((o) => ({ ...o, ...c.data() }));
+      if (c.exists()) { setCfg((o) => ({ ...o, ...c.data() })); applyLive(c.data()); }
       const b = await getDocs(query(collection(db, 'ranked', season(), 'players'), orderBy('rp', 'desc'), limit(50)));
       const rows = b.docs.map((d) => ({ uid: d.id, ...d.data() }));
       setBoard(rows);
-      // who reached the top rank, earliest first (the first to get there wins the reward)
+      // the Dead Kings, most RP first (the top one at the end of the season wins the reward)
       setTop(rows.filter((r) => r.rp >= TOP_RP).sort((x, y) => (y.rp - x.rp) || ((x.updatedAt?.toMillis() || 0) - (y.updatedAt?.toMillis() || 0))));
     } catch (e) { msg.bad(e.message); }
   }, []); // eslint-disable-line
   useEffect(() => { load(); }, [load]);
+
+  // ---- the season schedule
+  const [sched, setSched] = useState(null);   // { months, startIdx } being edited (null = as saved)
+  const shown = sched || { months: Math.max(1, Number(cfg.seasonMonths) || 1), startIdx: Number(cfg.seasonStartIdx) || nowIdx() };
+  const preview = seasonOf(shown.months, shown.startIdx);
+  const saveSchedule = async () => {
+    const was = seasonOf(Math.max(1, Number(cfg.seasonMonths) || 1), Number(cfg.seasonStartIdx) || 0);
+    if (preview.id !== was.id && !window.confirm(`The current season id changes from ${was.id} to ${preview.id}: everyone starts the new leaderboard at 0 RP. Continue?`)) return;
+    try {
+      await setDoc(doc(db, 'config', 'live'), { seasonMonths: shown.months, seasonStartIdx: shown.startIdx }, { merge: true });
+      setCfg((o) => ({ ...o, seasonMonths: shown.months, seasonStartIdx: shown.startIdx })); applyLive({ seasonMonths: shown.months, seasonStartIdx: shown.startIdx });
+      setSched(null); msg.ok('Season schedule saved.'); await load();
+    } catch (e) { msg.bad(e.message); }
+  };
 
   const pickKind = (k) => setCfg({ ...cfg, topRewardKind: k, topRewardTitle: REWARDS[k].title, topRewardText: REWARDS[k].text, topRewardImage: REWARDS[k].image });
   const previewImage = (REWARDS[cfg.topRewardKind] && REWARDS[cfg.topRewardKind].image === cfg.topRewardImage) ? REWARDS[cfg.topRewardKind].local : cfg.topRewardImage;
@@ -449,9 +481,27 @@ function Ranked() {
           </div>
 
           <div className="da-panel">
-            <h2>This month's prize</h2>
+            <h2>Season schedule</h2>
+            <p style={{ margin: '0 0 10px', color: '#9aa0b4' }}>How long one ranked season lasts. When it ends, everyone starts the next one at 0 RP and the leaderboard resets by itself.</p>
+            <div className="da-row" style={{ marginBottom: 10 }}>
+              {[1, 2, 3, 4, 6, 12].map((m) => (
+                <span key={m} className={'da-chip' + (shown.months === m ? ' on' : '')} style={{ flex: '0 0 auto', minWidth: 0 }} onClick={() => setSched({ ...shown, months: m })}>{m} month{m > 1 ? 's' : ''}</span>
+              ))}
+            </div>
+            <label style={{ display: 'block', marginBottom: 10, color: '#cfd3df' }}>First season starts on the 1st of
+              <input type="month" value={idxToMonthInput(shown.startIdx)} onChange={(e) => setSched({ ...shown, startIdx: monthInputToIdx(e.target.value) })} style={{ marginTop: 6 }} />
+            </label>
+            <p style={{ margin: '0 0 12px', color: '#cfd3df' }}>
+              Season now: <b>{preview.id}</b>, from {idxText(preview.first)} to {idxText(preview.end)} (UTC). The next one starts on {idxText(preview.end)}.
+            </p>
+            <button className="da-btn gold" onClick={saveSchedule}>Save schedule</button>
+            <p style={{ margin: '12px 0 0', color: '#7c8294', fontSize: 13 }}>Needs the updated Firestore rules (Server/firestore.rules in the game project) published first, or ranked saves stop working when the season id changes.</p>
+          </div>
+
+          <div className="da-panel">
+            <h2>This season's prize</h2>
             <input placeholder="Prize name" value={cfg.seasonName || ''} onChange={(e) => setCfg({ ...cfg, seasonName: e.target.value })} />
-            <textarea placeholder="What the winner of the month gets" value={cfg.prizeText || ''} onChange={(e) => setCfg({ ...cfg, prizeText: e.target.value })} />
+            <textarea placeholder="What the winner of the season gets" value={cfg.prizeText || ''} onChange={(e) => setCfg({ ...cfg, prizeText: e.target.value })} />
             <input placeholder="Prize image link (https://...)" value={cfg.prizeImage || ''} onChange={(e) => setCfg({ ...cfg, prizeImage: e.target.value })} />
             <div className="da-row" style={{ marginBottom: 12 }}>
               <span className="da-chip" style={{ flex: '0 0 auto', minWidth: 0 }} onClick={() => setCfg({ ...cfg, prizeImage: REWARDS.cash.image })}>$10 card</span>
