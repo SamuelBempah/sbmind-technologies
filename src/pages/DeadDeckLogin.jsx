@@ -95,6 +95,10 @@ const GoogleG = () => (
   </svg>
 );
 
+// Chrome on Android starts an installed app from a link that names its package; the game's main screen opens.
+const GAME_INTENT = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.sbmindtechnologies.deaddeck;end';
+const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
+
 export default function DeadDeckLogin() {
   const [params] = useSearchParams();
   const code = (params.get('code') || '').trim();
@@ -148,6 +152,13 @@ export default function DeadDeckLogin() {
       }
     })();
   }, [user, profile, codeOk, code, linked]);
+
+  // the sign-in is handed over: open the game by itself (it checks the link as soon as it comes to the front)
+  useEffect(() => {
+    if (!linked || !isAndroid) return undefined;
+    const t = setTimeout(() => { window.location.href = GAME_INTENT; }, 1200);
+    return () => clearTimeout(t);
+  }, [linked]);
 
   // check the tag while it is typed
   useEffect(() => {
@@ -276,7 +287,14 @@ export default function DeadDeckLogin() {
       <div className="dd-big">You are <b>{profile.tag}</b></div>
       {codeOk ? (
         linked ? (
-          <p style={{ textAlign: 'center' }}>All set. Go back to the game: it will sign you in by itself.</p>
+          isAndroid ? (
+            <>
+              <p style={{ textAlign: 'center' }}>All set. Opening Dead Deck...</p>
+              <a className="dd-btn red" href={GAME_INTENT} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Open Dead Deck</a>
+            </>
+          ) : (
+            <p style={{ textAlign: 'center' }}>All set. Go back to the game: it will sign you in by itself.</p>
+          )
         ) : (
           <div className="dd-spin" />
         )
