@@ -660,8 +660,130 @@ function Billboards() {
   );
 }
 
+// ------------------------------------------------------------------ news (the NEWS tab in the game's main menu)
+// Posts are kept in config/live: `newsAdmin` is every post (with its on/off switch) and `newsJson` is what players get (only the posts that
+// are on). The game reads newsJson when its main menu opens. Announcement = a card in the NEWS tab. Optional / forced update = a popup for
+// players whose app version is below the version typed here (forced cannot be closed).
+const NEWS_KINDS = [['news', 'Announcement (NEWS tab)'], ['optional', 'Update popup (players can say LATER)'], ['force', 'Forced update (cannot be closed)']];
+
+function News() {
+  const [items, setItems] = useState([]);
+  const [kind, setKind] = useState('news');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [link, setLink] = useState('');
+  const [linkLabel, setLinkLabel] = useState('');
+  const [version, setVersion] = useState('');
+  const [file, setFile] = useState(null);
+  const [fileErr, setFileErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const msg = useMsg();
+
+  const load = useCallback(async () => {
+    try {
+      const c = await getDoc(doc(db, 'config', 'live'));
+      let list = [];
+      if (c.exists() && c.data().newsAdmin) { try { list = JSON.parse(c.data().newsAdmin); } catch (e) { list = []; } }
+      setItems(Array.isArray(list) ? list : []);
+    } catch (e) { msg.bad(e.message); }
+  }, []); // eslint-disable-line
+  useEffect(() => { load(); }, [load]);
+
+  const pick = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    setFile(null); setFileErr(''); msg.ok('');
+    if (!f) return;
+    if (f.type !== 'image/png' && f.type !== 'image/jpeg') { setFileErr('Use a PNG or JPG picture.'); return; }
+    if (f.size > BB.imageMB * 1048576) { setFileErr(`This picture is ${(f.size / 1048576).toFixed(1)} MB. Use ${BB.imageMB} MB or smaller.`); return; }
+    try {
+      const { w, h } = await readImage(f);
+      if (Math.abs(w / h - 16 / 9) > 0.03) setFileErr(`This picture is ${w}×${h}. It is not 16:9, so it will be cropped on the card (1280×720 is ideal). You can still post it.`);
+      setFile(f);
+    } catch (er) { setFileErr(er.message); }
+  };
+
+  // writes both copies: all posts for this page, and the live ones for players
+  const save = async (next) => {
+    const live = next.filter((x) => x.on).map((x) => { const { on, ...rest } = x; return rest; }); // eslint-disable-line no-unused-vars
+    await setDoc(doc(db, 'config', 'live'), { newsAdmin: JSON.stringify(next), newsJson: JSON.stringify({ items: live }) }, { merge: true });
+    setItems(next);
+  };
+
+  const add = async () => {
+    if (!title.trim() || !body.trim()) { msg.bad('A post needs a title and a message.'); return; }
+    if (kind !== 'news' && !/^\d+(\.\d+){1,3}$/.test(version.trim())) { msg.bad('An update needs the version players must reach, like 0.2.0 (players on a lower version see it).'); return; }
+    setBusy(true); msg.ok('');
+    try {
+      let image = '';
+      if (file) {
+        const blob = await upload('billboards/news_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_'), file, {
+          access: 'public', handleUploadUrl: UPLOAD_URL, clientPayload: await auth.currentUser.getIdToken(), contentType: file.type,
+        });
+        image = blob.url;
+      }
+      const post = {
+        id: 'p' + Date.now(), kind, title: title.trim(), body: body.trim(), image, link: link.trim(), linkLabel: linkLabel.trim(),
+        version: kind === 'news' ? '' : version.trim(), date: new Date().toISOString(), on: true,
+      };
+      await save([post, ...items]);
+      msg.ok('Posted. Players see it the next time they open the main menu.');
+      setTitle(''); setBody(''); setLink(''); setLinkLabel(''); setVersion(''); setFile(null); setFileErr('');
+      const f = document.getElementById('news-file'); if (f) f.value = '';
+    } catch (e) { msg.bad(e.message || 'Could not post.'); }
+    setBusy(false);
+  };
+
+  const toggle = (i) => save(items.map((x, k) => (k === i ? { ...x, on: !x.on } : x))).catch((e) => msg.bad(e.message));
+  const remove = (i) => { if (window.confirm('Delete this post?')) save(items.filter((_, k) => k !== i)).catch((e) => msg.bad(e.message)); };
+
+  return (
+    <>
+      <Title text="News" live />
+      <div className="da-cols">
+        <div className="da-stack">
+          <div className="da-panel">
+            <h2>New post</h2>
+            <div className="da-card-note" style={{ color: '#b9bfd0', fontSize: 14, lineHeight: 1.6, marginBottom: 14 }}>
+              Announcements appear in the NEWS tab on the game's main menu (a red badge shows until a player reads them).<br />
+              An update popup shows only to players whose app version is lower than the version you type, and it links to the store when you leave the link empty.
+            </div>
+            <select value={kind} onChange={(e) => setKind(e.target.value)}>
+              {NEWS_KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+            <input placeholder="Title" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} />
+            <textarea placeholder="Message" value={body} maxLength={1500} onChange={(e) => setBody(e.target.value)} style={{ minHeight: 130 }} />
+            {kind !== 'news' && <input placeholder="Players below this version see it (e.g. 0.2.0)" value={version} onChange={(e) => setVersion(e.target.value)} />}
+            <input id="news-file" type="file" accept="image/png,image/jpeg" onChange={pick} />
+            {fileErr && <div className="da-err">{fileErr}</div>}
+            {file && !fileErr && <div className="da-msg">Picture ready: {file.name}</div>}
+            <input placeholder="Button link (optional)" value={link} onChange={(e) => setLink(e.target.value)} />
+            <input placeholder="Button text (optional, e.g. READ MORE)" value={linkLabel} maxLength={30} onChange={(e) => setLinkLabel(e.target.value)} />
+            <button className="da-btn gold" disabled={busy} onClick={add}>{busy ? 'Posting...' : 'Post'}</button>
+            {msg.m && <div className="da-msg">{msg.m}</div>}{msg.e && <div className="da-err">{msg.e}</div>}
+          </div>
+        </div>
+        <div className="da-panel">
+          <h2>Posts ({items.filter((x) => x.on).length} on of {items.length})</h2>
+          {items.length === 0 && <p style={{ color: '#7c8294', margin: 0 }}>Nothing posted here yet. Posts made with the old news admin on the PC still show in the game too.</p>}
+          {items.map((x, i) => (
+            <div key={x.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.06)', opacity: x.on ? 1 : 0.45 }}>
+              {x.image ? <img alt="" src={x.image} style={{ width: 128, height: 72, borderRadius: 6, objectFit: 'cover' }} /> : <div style={{ width: 128, height: 72, borderRadius: 6, background: 'rgba(255,255,255,.05)' }} />}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <b>{x.title}</b>
+                <div style={{ fontSize: 12, color: '#7c8294' }}>{x.kind === 'news' ? 'Announcement' : (x.kind === 'force' ? 'Forced update below ' : 'Update below ') + x.version} / {x.date ? new Date(x.date).toLocaleDateString() : '-'}</div>
+              </div>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => toggle(i)}>{x.on ? 'Hide' : 'Show'}</button>
+              <button className="da-btn ghost" style={{ padding: '7px 10px' }} onClick={() => remove(i)}>Delete</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ------------------------------------------------------------------ the page
-const TABS = [['overview', 'Overview'], ['players', 'Players & bans'], ['ranked', 'Ranked & prizes'], ['billboards', 'Billboards']];
+const TABS = [['overview', 'Overview'], ['players', 'Players & bans'], ['ranked', 'Ranked & prizes'], ['billboards', 'Billboards'], ['news', 'News']];
 
 export default function DeadDeckAdmin() {
   const [user, setUser] = useState(undefined);
@@ -720,6 +842,7 @@ export default function DeadDeckAdmin() {
               {tab === 'players' && <Players admin={user} />}
               {tab === 'ranked' && <Ranked />}
               {tab === 'billboards' && <Billboards />}
+              {tab === 'news' && <News />}
             </div>
           </>
         )}
