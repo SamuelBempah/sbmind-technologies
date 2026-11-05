@@ -20,14 +20,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@400;500;600&family=Lilita+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/styles.css?v=81c3767f">
 <link rel="preload" as="image" href="/img/hero-small.webp" fetchpriority="high">
 </head>
 <body>
 
 <!-- ============ HUD (fixed) ============ -->
 <header class="hud" id="hud">
-  <a class="hud-logo" href="#top" aria-label="Troski Simulator home"><img src="/img/logo.png" alt="Troski Simulator" width="112" height="auto"></a>
+  <a class="hud-logo" href="#top" aria-label="Troski Simulator home"><span class="mini-wm" aria-hidden="true"><span class="m1">TROSKI</span><span class="m2">SIMULATOR</span></span></a>
   <div class="xp panel" aria-label="Experience">
     <div class="xp-top"><span class="xp-lvl" id="lvl">LVL 1</span><span class="xp-title" id="lvlTitle">NOVICE</span><span class="xp-num" id="xpNum">0 XP</span></div>
     <div class="xp-bar"><i id="xpFill"></i></div>
@@ -170,7 +170,7 @@
 
 <footer class="foot">
   <div class="wrap foot-in">
-    <img src="/img/logo.png" alt="Troski Simulator" width="130" height="auto" loading="lazy">
+    <span class="mini-wm big" role="img" aria-label="Troski Simulator"><span class="m1">TROSKI</span><span class="m2">SIMULATOR</span></span>
     <p>&copy; 2026 SBMind Technologies. Troski Simulator is made by SBMind Interactive in Ghana. Screenshots are captured in-game at 4K.</p>
     <p><a href="https://www.sbmindtechnologies.com" rel="noopener">sbmindtechnologies.com</a></p>
   </div>
@@ -197,6 +197,6 @@
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="coins" id="coinLayer"></div>
 
-<script src="/app.js" defer></script>
+<script src="/app.js?v=df13cf9e" defer></script>
 </body>
 </html>
