@@ -58,8 +58,8 @@ button.chip:hover{filter:brightness(1.25)}
 
 /* ===== HERO ===== */
 .hero{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;isolation:isolate}
-.hero-bg{position:absolute;inset:-6% 0;background:#0b0c0e url(/img/hero-small.webp) 0% 42%/auto 128%;background-repeat:no-repeat;z-index:-3;will-change:transform}
-@media (min-width:900px){.hero-bg{background-image:url(/img/hero.webp);background-size:128% auto;background-position:0% 40%}}
+.hero-bg{position:absolute;inset:-6% 0;background:#0b0c0e url(/img/hero-van-small-v2.webp) 0% 42%/auto 128%;background-repeat:no-repeat;z-index:-3;will-change:transform}
+@media (min-width:900px){.hero-bg{background-image:url(/img/hero-van-v2.webp);background-size:128% auto;background-position:0% 40%}}
 @media (min-width:1700px){.hero-bg{background-size:118% auto}}
 .hero-shade{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,rgba(10,11,13,.80) 0%,rgba(10,11,13,.42) 38%,rgba(10,11,13,0) 68%),linear-gradient(0deg,var(--steel) 0%,transparent 28%)}
 .hero-inner{width:min(1180px,100% - 40px);margin:0 auto;padding:96px 0 118px}
@@ -219,7 +219,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(38px,6vw,74px);lin
 
 /* ===== CTA ===== */
 .cta-sec{text-align:center;overflow:hidden;isolation:isolate;display:flex;align-items:flex-end;justify-content:center;min-height:calc(38.5vw + 372px);padding:100px 0 64px}
-.cta-bg{position:absolute;inset:0;z-index:-2;background:#0b0c0e url(/img/hero-night.webp) 50% 0/100% auto no-repeat}
+.cta-bg{position:absolute;inset:0;z-index:-2;background:#0b0c0e url(/img/final-level-v2.webp) 50% 0/100% auto no-repeat}
 @media (max-width:900px){.cta-bg{background-size:auto 330px}.cta-sec{min-height:0;padding-top:300px;padding-bottom:40px}}
 .cta-sec::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,var(--steel) 0%,rgba(10,11,13,0) 12%,rgba(10,11,13,0) 56%,rgba(11,12,14,.8) 74%,#0b0c0e 90%)}
 .cta-inner{width:min(860px,100% - 32px)}
@@ -272,7 +272,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(38px,6vw,74px);lin
 /* ===== phone layout: the van on top, then the logo, the pitch and the buttons ===== */
 @media (max-width:900px){
   .hero{align-items:flex-start;min-height:0}
-  .hero-bg{inset:0 0 auto 0;height:58vh;background-image:url(/img/hero-small.webp);background-size:cover;background-position:63% 40%;background-repeat:no-repeat}
+  .hero-bg{inset:0 0 auto 0;height:58vh;background-image:url(/img/hero-van-small-v2.webp);background-size:cover;background-position:63% 40%;background-repeat:no-repeat}
   .hero-shade{background:linear-gradient(180deg,rgba(10,11,13,.55) 0,rgba(10,11,13,0) 16vh,rgba(10,11,13,0) 34vh,var(--steel) 58vh)}
   .hero-inner{padding:calc(42vh) 0 70px}
   .hero-logo{margin-left:-10px}
