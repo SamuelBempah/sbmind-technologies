@@ -7,24 +7,29 @@
 
   /* ---------- saved progress ---------- */
   const KEY = 'troski_site_v1';
-  const blank = { coins: [], dl: [], modes: [], pins: [], views: [], honk: 0, muted: false, shown: [] };
+  const blank = { coins: [], dl: [], modes: [], pins: [], views: [], honk: 0, muted: false, shown: [], radioOff: false };
   let S;
   try { S = Object.assign({}, blank, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, blank); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* private mode */ } };
   const addTo = (arr, v) => { if (!S[arr].includes(v)) { S[arr].push(v); return true; } return false; };
 
-  /* ---------- sound (tiny synth, no files) ---------- */
-  let ac;
+  /* ---------- sound effects: the game's own files (/sfx), decoded once and played through Web Audio ---------- */
+  let ac; const buf = {}, pending = {};
+  const NAMES = ['horn', 'click', 'tap', 'popup', 'play', 'whoosh', 'sting', 'cash', 'coin', 'bonus', 'door'];
   const ctx = () => { if (!ac) { const C = window.AudioContext || window.webkitAudioContext; if (C) ac = new C(); } if (ac && ac.state === 'suspended') ac.resume(); return ac; };
-  function tone(freq, dur, type, vol, when) {
-    if (S.muted) return; const a = ctx(); if (!a) return;
-    const t = a.currentTime + (when || 0), o = a.createOscillator(), g = a.createGain();
-    o.type = type || 'square'; o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  function load(name) {
+    if (buf[name] || pending[name]) return pending[name];
+    const a = ctx(); if (!a) return null;
+    return (pending[name] = fetch('/sfx/' + name + '.mp3').then(r => r.arrayBuffer()).then(b => new Promise((res, rej) => a.decodeAudioData(b, res, rej))).then(d => { buf[name] = d; return d; }).catch(() => null));
   }
-  const honk = () => { tone(392, 0.28, 'sawtooth', 0.09); tone(494, 0.28, 'sawtooth', 0.07); tone(392, 0.22, 'sawtooth', 0.09, 0.34); tone(494, 0.22, 'sawtooth', 0.07, 0.34); };
-  const blip = () => { tone(880, 0.09, 'square', 0.06); tone(1320, 0.14, 'square', 0.05, 0.08); };
-  const fanfare = () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, 'square', 0.06, i * 0.09)); };
+  function play(name, vol) {
+    if (S.muted) return; const a = ctx(); if (!a) return;
+    const go = () => { const d = buf[name]; if (!d) return; const src = a.createBufferSource(), g = a.createGain(); src.buffer = d; g.gain.value = vol || 0.8; src.connect(g).connect(a.destination); src.start(); };
+    if (buf[name]) go(); else { const p = load(name); if (p) p.then(go); }
+  }
+  const warm = () => { NAMES.forEach(load); removeEventListener('pointerdown', warm); removeEventListener('keydown', warm); };
+  addEventListener('pointerdown', warm); addEventListener('keydown', warm);
+  const honk = () => play('horn', 0.9), blip = () => play('tap', 0.7), pickSfx = () => play('click', 0.8), fanfare = () => play('bonus', 0.7), levelUp = () => play('sting', 0.8);
 
   /* ---------- toasts ---------- */
   function toast(icon, title, sub) {
@@ -72,7 +77,7 @@
     $('#lvl').textContent = 'LVL ' + (lvl + 1); $('#lvlTitle').textContent = LEVELS[Math.min(lvl, LEVELS.length - 1)];
     $('#xpNum').textContent = xp + ' XP'; $('#xpFill').style.width = (into / per * 100) + '%';
     $('#cash').textContent = 'GHS ' + (S.coins.length * 5);
-    if (lastLevel && lvl > lastLevel) { toast('⬆️', 'Level up!', 'You are now level ' + (lvl + 1) + ': ' + LEVELS[Math.min(lvl, LEVELS.length - 1)]); fanfare(); }
+    if (lastLevel && lvl > lastLevel) { toast('⬆️', 'Level up!', 'You are now level ' + (lvl + 1) + ': ' + LEVELS[Math.min(lvl, LEVELS.length - 1)]); levelUp(); }
     lastLevel = lvl;
   }
 
@@ -123,7 +128,7 @@
       $('h3', panel).textContent = m.name; $('p', panel).textContent = m.blurb; $('.reward', panel).textContent = 'Earns: ' + m.reward;
       const labs = $$('.bar', panel); const vals = [m.diff, m.pay];
       labs.forEach((bar, k) => { $('span', bar).textContent = vals[k] + '%'; requestAnimationFrame(() => requestAnimationFrame(() => { $('i', bar).style.width = vals[k] + '%'; })); });
-      blip(); if (addTo('modes', i)) { save(); renderTrophies(); updateHud(); }
+      pickSfx(); if (addTo('modes', i)) { save(); renderTrophies(); updateHud(); }
     }
     select(1); S.modes = S.modes.filter(x => x !== 1 || S.shown.includes('modes') || true); // selecting the default does not count unless clicked
     S.modes = (JSON.parse(localStorage.getItem(KEY) || '{}').modes) || []; save();
@@ -160,7 +165,7 @@
       const c = document.createElement('button'); c.type = 'button'; c.className = 'lm'; c.textContent = p.n; list.appendChild(c); chips.push(c);
       const go = () => {
         els.forEach((e, k) => e.classList.toggle('is-on', k === i)); chips.forEach((e, k) => e.classList.toggle('is-on', k === i));
-        $('b', info).textContent = p.n; $('span', info).textContent = p.d; blip();
+        $('b', info).textContent = p.n; $('span', info).textContent = p.d; pickSfx();
         if (addTo('pins', i)) { save(); renderTrophies(); updateHud(); }
       };
       b.addEventListener('click', go); c.addEventListener('click', go);
@@ -171,7 +176,7 @@
   let SHOTS = [], view = [], cur = 0;
   const DL = id => '/downloads/troski-simulator-' + id;
   function markDownload(id) {
-    if (addTo('dl', id)) { save(); updateCollection(); renderTrophies(); updateHud(); toast('⬇️', 'Wallpaper collected', (S.dl.length) + ' of ' + SHOTS.length + ' in your garage'); blip(); }
+    if (addTo('dl', id)) { save(); updateCollection(); renderTrophies(); updateHud(); toast('⬇️', 'Wallpaper collected', (S.dl.length) + ' of ' + SHOTS.length + ' in your garage'); play('cash', 0.8); }
   }
   function updateCollection() {
     const n = S.dl.length, t = SHOTS.length || 16;
@@ -204,7 +209,7 @@
     d4.href = DL(s.id) + '-4k.jpg'; d4.setAttribute('download', 'troski-simulator-' + s.id + '-4k.jpg'); $('#lbDl4kTxt').textContent = 'DOWNLOAD 4K (' + s.mb4k + ' MB)';
     d1.href = DL(s.id) + '-1080p.jpg'; d1.setAttribute('download', 'troski-simulator-' + s.id + '-1080p.jpg'); $('#lbDl1080Txt').textContent = '1080p';
     d4.onclick = () => markDownload(s.id); d1.onclick = () => markDownload(s.id);
-    lb.hidden = false; document.body.style.overflow = 'hidden'; $('#lbClose').focus();
+    if (lb.hidden) play('whoosh', 0.6); lb.hidden = false; document.body.style.overflow = 'hidden'; $('#lbClose').focus();
     if (addTo('views', s.id)) { save(); renderTrophies(); updateHud(); }
   }
   const closeLb = () => { lb.hidden = true; document.body.style.overflow = ''; };
@@ -219,7 +224,7 @@
   $('#filters').addEventListener('click', e => {
     const b = e.target.closest('.fchip'); if (!b) return;
     $$('.fchip').forEach(x => { x.classList.toggle('is-on', x === b); x.setAttribute('aria-selected', x === b); });
-    renderGallery(b.dataset.f);
+    pickSfx(); renderGallery(b.dataset.f);
   });
   fetch('/gallery/shots.json').then(r => r.json()).then(d => { SHOTS = d; window.__SHOTS = d; renderGallery('all'); renderTrophies(true); updateHud(); })
     .catch(() => { $('#gallery').innerHTML = '<p class="lead">The gallery could not load. Please refresh the page.</p>'; });
@@ -235,7 +240,7 @@
       b.style.left = (r.left + scrollX + r.width * fx - 17) + 'px'; b.style.top = (r.top + scrollY + r.height * fy - 17) + 'px'; b.style.animationDelay = (i * -0.35) + 's';
       b.addEventListener('click', () => {
         b.classList.add('pop'); setTimeout(() => b.remove(), 520);
-        if (addTo('coins', id)) { save(); blip(); toast('🪙', '+GHS 5', S.coins.length + ' of ' + TOTAL_COINS + ' coins found'); renderTrophies(); updateHud(); }
+        if (addTo('coins', id)) { save(); play('coin', 0.9); toast('🪙', '+GHS 5', S.coins.length + ' of ' + TOTAL_COINS + ' coins found'); renderTrophies(); updateHud(); }
       });
       layer.appendChild(b);
     });
@@ -243,6 +248,7 @@
   document.body.style.position = 'relative';
 
   /* ---------- horn / mute ---------- */
+  $('#startShift').addEventListener('click', () => play('play', 0.7));
   $('#horn').addEventListener('click', () => { honk(); S.honk++; save(); renderTrophies(); updateHud(); });
   const muteBtn = $('#muteBtn');
   function paintMute() { $('#muteTxt').textContent = S.muted ? 'SFX OFF' : 'SFX ON'; muteBtn.setAttribute('aria-pressed', S.muted); }
@@ -252,6 +258,71 @@
   /* ---------- reveal on scroll ---------- */
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 }) : null;
   $$('.reveal').forEach(el => io ? io.observe(el) : el.classList.add('in'));
+
+
+  /* ---------- radio: random Ghanaian stations (same source as the game), 30 seconds each, no manual tuning ---------- */
+  (function () {
+    const box = $('#radio'); if (!box) return;
+    const nameEl = $('#radioName'), secsEl = $('#radioSecs'), ringEl = $('#radioRing'), btn = $('#radioBtn');
+    const HOSTS = ['https://de1.api.radio-browser.info', 'https://nl1.api.radio-browser.info', 'https://at1.api.radio-browser.info'];
+    const BAD = /church|gospel|prayer|evangelist|parousia|amen|reach the world|fruitful|bible|jesus|christ|word|chapel|kingdom|apostolic|pentecost|oduro/i;
+    const GOOD = /hitz|y\s?fm|joy|luv|happy|adom|angel|oman|asempa|nhyira|agoo|atl|kente|ghana music|afro|shatta|rainbow|cape|citi|peace|sankofa|uniiq|hana|dadi|skyy|infinity|sompa|opemsuo/i;
+    const MUSIC = ['highlife', 'afrobeat', 'hiplife', 'reggae', 'dancehall', 'hip hop', 'afro', 'r&b', 'pop', 'music', 'hits'];
+    const SLOT = 30; let list = [], queue = [], on = !S.radioOff, started = false, playing = false, tick = null, left = SLOT, last = '', failTimer = null, vfade = null;
+    const audio = new Audio(); audio.preload = 'none'; audio.volume = 0;
+    const VOL = 0.55;
+
+    function paint() {
+      box.classList.toggle('off', !on); btn.textContent = on ? 'RADIO ON' : 'RADIO OFF'; btn.setAttribute('aria-pressed', on);
+      if (!on) { nameEl.textContent = 'RADIO OFF'; secsEl.textContent = '--'; ringEl.style.strokeDashoffset = 100; }
+    }
+    function fade(to, ms, done) {
+      clearInterval(vfade); const from = audio.volume, t0 = performance.now();
+      vfade = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / ms); audio.volume = from + (to - from) * k; if (k >= 1) { clearInterval(vfade); if (done) done(); } }, 40);
+    }
+    function pick() {
+      if (!list.length) return null; if (!queue.length) { queue = list.slice().sort(() => Math.random() - 0.5); if (queue.length > 1 && queue[queue.length - 1].u === last) queue.unshift(queue.pop()); }
+      return queue.pop();
+    }
+    function startClock() {
+      clearInterval(tick); left = SLOT; paintClock();
+      tick = setInterval(() => { left--; paintClock(); if (left <= 0) next(); }, 1000);
+    }
+    function paintClock() { secsEl.textContent = left; ringEl.style.strokeDashoffset = 100 - (left / SLOT) * 100; }
+    function next() {
+      clearInterval(failTimer); if (!on) return; const st = pick(); if (!st) { nameEl.textContent = 'NO SIGNAL'; return; }
+      fade(0, 350, () => {
+        if (!on) return; last = st.u; nameEl.textContent = st.n; audio.src = st.u; startClock();
+        const bad = () => { clearTimeout(failTimer); if (on && audio.dataset.cur === st.u) next(); };
+        audio.dataset.cur = st.u; audio.onerror = bad; clearTimeout(failTimer); failTimer = setTimeout(() => { if (audio.paused || audio.readyState < 3) bad(); }, 8000);
+        audio.play().then(() => { fade(VOL, 700); }).catch(bad);
+      });
+    }
+    function usable(it) {
+      if (!it || !it.url_resolved || !/^https:/i.test(it.url_resolved)) return false; const c = (it.codec || '').toUpperCase(); if (c !== 'MP3' && c !== 'AAC' && c !== 'AAC+') return false;
+      if (BAD.test(it.name)) return false; const t = (it.tags || '').toLowerCase(); return MUSIC.some(m => t.includes(m)) || GOOD.test(it.name);
+    }
+    async function fetchList() {
+      for (const h of HOSTS) {
+        try {
+          const r = await fetch(h + '/json/stations/bycountrycodeexact/GH?hidebroken=true&order=clickcount&reverse=true&limit=160'); if (!r.ok) continue; const d = await r.json(), seen = new Set(), out = [];
+          d.forEach(it => { if (usable(it) && !seen.has(it.url_resolved)) { seen.add(it.url_resolved); out.push({ n: it.name.trim().replace(/Accra/gi, 'Gold Coast'), u: it.url_resolved }); } });
+          if (out.length >= 5) return out;
+        } catch (e) { /* next host */ }
+      }
+      try { return (await (await fetch('/radio-fallback.json')).json()).map(s => ({ n: s.n.replace(/Accra/gi, 'Gold Coast'), u: s.u })); } catch (e) { return []; }
+    }
+    async function begin() {
+      if (started || !on) return; started = true; nameEl.textContent = 'TUNING...'; list = await fetchList(); if (!on) { started = false; return; } next();
+    }
+    function userStart() { removeEventListener('pointerdown', userStart); removeEventListener('keydown', userStart); begin(); }
+    btn.addEventListener('click', e => {
+      e.stopPropagation(); on = !on; S.radioOff = !on; save(); paint(); play('click', 0.7);
+      if (!on) { clearInterval(tick); clearTimeout(failTimer); fade(0, 300, () => audio.pause()); } else { if (!started) begin(); else next(); }
+    });
+    paint();
+    if (on) { addEventListener('pointerdown', userStart); addEventListener('keydown', userStart); }
+  })();
 
   /* ---------- go ---------- */
   addEventListener('scroll', onScroll, { passive: true });
