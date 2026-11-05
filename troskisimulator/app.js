@@ -203,7 +203,9 @@
   const lb = $('#lb');
   function openLb(i) {
     cur = (i + view.length) % view.length; const s = view[cur];
-    $('#lbImg').src = '/gallery/view/' + s.id + '.webp'; $('#lbImg').alt = s.title;
+    const im = $('#lbImg'), full = '/gallery/view/' + s.id + '.webp'; im.alt = s.title;
+    im.classList.add('loading'); im.src = '/gallery/thumb/' + s.id + '.webp';          // the new picture's thumbnail shows at once (never the previous picture)
+    const pre = new Image(); pre.onload = () => { if (view[cur] === s) { im.src = full; im.classList.remove('loading'); [cur - 1, cur + 1].forEach(k => { const n = view[(k + view.length) % view.length]; if (n) new Image().src = '/gallery/view/' + n.id + '.webp'; }); } }; pre.src = full;
     $('#lbTitle').textContent = s.title; $('#lbSub').textContent = s.place + ' · ' + s.time; $('#lbBlurb').textContent = s.blurb;
     const d4 = $('#lbDl4k'), d1 = $('#lbDl1080');
     d4.href = DL(s.id) + '-4k.jpg'; d4.setAttribute('download', 'troski-simulator-' + s.id + '-4k.jpg'); $('#lbDl4kTxt').textContent = 'DOWNLOAD 4K (' + s.mb4k + ' MB)';
@@ -272,6 +274,7 @@
     const audio = new Audio(); audio.preload = 'none'; audio.volume = 0;
     const VOL = 0.55;
 
+    function stopStream() { audio.onerror = null; audio.pause(); audio.removeAttribute('src'); audio.load(); }      // closes the connection, so nothing keeps downloading
     function paint() {
       box.classList.toggle('off', !on); btn.textContent = on ? 'RADIO ON' : 'RADIO OFF'; btn.setAttribute('aria-pressed', on);
       if (!on) { nameEl.textContent = 'RADIO OFF'; secsEl.textContent = '--'; ringEl.style.strokeDashoffset = 100; }
@@ -292,8 +295,8 @@
     function next() {
       clearInterval(failTimer); if (!on) return; const st = pick(); if (!st) { nameEl.textContent = 'NO SIGNAL'; return; }
       fade(0, 350, () => {
-        if (!on) return; last = st.u; nameEl.textContent = st.n; audio.src = st.u; startClock();
-        const bad = () => { clearTimeout(failTimer); if (on && audio.dataset.cur === st.u) next(); };
+        if (!on) return; stopStream(); last = st.u; nameEl.textContent = st.n; audio.src = st.u; startClock();
+        const bad = () => { clearTimeout(failTimer); if (on && audio.dataset.cur === st.u) { stopStream(); next(); } };
         audio.dataset.cur = st.u; audio.onerror = bad; clearTimeout(failTimer); failTimer = setTimeout(() => { if (audio.paused || audio.readyState < 3) bad(); }, 8000);
         audio.play().then(() => { fade(VOL, 700); }).catch(bad);
       });
@@ -318,7 +321,7 @@
     function userStart() { removeEventListener('pointerdown', userStart); removeEventListener('keydown', userStart); begin(); }
     btn.addEventListener('click', e => {
       e.stopPropagation(); on = !on; S.radioOff = !on; save(); paint(); play('click', 0.7);
-      if (!on) { clearInterval(tick); clearTimeout(failTimer); fade(0, 300, () => audio.pause()); } else { if (!started) begin(); else next(); }
+      if (!on) { clearInterval(tick); clearTimeout(failTimer); audio.onerror = null; fade(0, 300, stopStream); } else { if (!started) begin(); else next(); }
     });
     paint();
     if (on) { addEventListener('pointerdown', userStart); addEventListener('keydown', userStart); }
