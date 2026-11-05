@@ -239,7 +239,7 @@
       const id = 'c' + i; if (S.coins.includes(id)) return;
       const s = document.getElementById(sec); if (!s) return; const r = s.getBoundingClientRect();
       const b = document.createElement('button'); b.className = 'coin'; b.type = 'button'; b.setAttribute('aria-label', 'Collect cedi coin');
-      b.style.left = (r.left + scrollX + r.width * fx - 17) + 'px'; b.style.top = (r.top + scrollY + r.height * fy - 17) + 'px'; b.style.animationDelay = (i * -0.35) + 's';
+      b.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - 40, r.left + scrollX + r.width * fx - 17)) + 'px'; b.style.top = (r.top + scrollY + r.height * fy - 17) + 'px'; b.style.animationDelay = (i * -0.35) + 's';
       b.addEventListener('click', () => {
         b.classList.add('pop'); setTimeout(() => b.remove(), 520);
         if (addTo('coins', id)) { save(); play('coin', 0.9); toast('🪙', '+GHS 5', S.coins.length + ' of ' + TOTAL_COINS + ' coins found'); renderTrophies(); updateHud(); }
