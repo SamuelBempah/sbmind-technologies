@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troski Simulator | Drive the tro tro. Run Accra.</title>
+<meta name="description" content="Troski Simulator is an open-world tro tro driving game set in Accra, Ghana. Pick up passengers, haul cargo, beat the checkpoints and download 4K wallpapers from the game.">
+<meta name="theme-color" content="#131417">
+<link rel="canonical" href="https://troskisimulator.sbmindtechnologies.com/">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/img/icon-256.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Troski Simulator">
+<meta property="og:title" content="Troski Simulator | Drive the tro tro. Run Accra.">
+<meta property="og:description" content="An open-world tro tro driving game set in Accra, Ghana. Download 4K wallpapers from the game.">
+<meta property="og:url" content="https://troskisimulator.sbmindtechnologies.com/">
+<meta property="og:image" content="https://troskisimulator.sbmindtechnologies.com/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://troskisimulator.sbmindtechnologies.com/img/og.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@400;500;600&family=Lilita+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="preload" as="image" href="/img/hero-small.webp" fetchpriority="high">
+</head>
+<body>
+
+<!-- ============ HUD (fixed) ============ -->
+<header class="hud" id="hud">
+  <a class="hud-logo" href="#top" aria-label="Troski Simulator home"><img src="/img/logo.png" alt="Troski Simulator" width="112" height="auto"></a>
+  <div class="xp panel" aria-label="Experience">
+    <div class="xp-top"><span class="xp-lvl" id="lvl">LVL 1</span><span class="xp-title" id="lvlTitle">NOVICE</span><span class="xp-num" id="xpNum">0 XP</span></div>
+    <div class="xp-bar"><i id="xpFill"></i></div>
+  </div>
+  <nav class="hud-nav" aria-label="Sections">
+    <a href="#game">Game</a><a href="#modes">Modes</a><a href="#world">Accra</a><a href="#wallpapers">Wallpapers</a>
+  </nav>
+  <div class="hud-stats">
+    <div class="chip panel" title="Cedi coins collected on this page"><span class="coin-ico"></span><b id="cash">GHS 0</b></div>
+    <button class="chip panel btn-horn" id="horn" aria-label="Honk the horn" title="Honk!"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 10v4h3l5 4V6L6 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></button>
+    <button class="chip panel" id="muteBtn" aria-pressed="false" title="Sound on/off"><span id="muteTxt">SFX ON</span></button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-shade"></div>
+  <div class="hero-inner">
+    <p class="kicker"><span class="flag"><i></i><i></i><i></i></span> An SBMind Interactive game · Accra, Ghana</p>
+    <h1 class="wordmark" aria-label="Troski Simulator"><span class="wm-1">TROSKI</span><span class="wm-2">SIMULATOR</span></h1>
+    <p class="tagline">Load the passengers. Beat the checkpoints. <em>Own the roads of Accra.</em></p>
+    <div class="cta-row">
+      <a class="btn btn-gold" href="#modes" id="startShift"><span>START SHIFT</span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M8 4l8 8-8 8"/></svg></a>
+      <a class="btn btn-ghost" href="#wallpapers"><span>GET 4K WALLPAPERS</span></a>
+    </div>
+    <ul class="hero-stats" aria-label="Game at a glance">
+      <li class="chip panel"><b>4</b><span>shift modes</span></li>
+      <li class="chip panel"><b>11</b><span>real landmarks</span></li>
+      <li class="chip panel"><b>24h</b><span>day and night</span></li>
+      <li class="chip panel"><b>4K</b><span>wallpapers below</span></li>
+    </ul>
+  </div>
+  <div class="gauge" aria-hidden="true">
+    <svg viewBox="0 0 200 200" width="190" height="190"><circle cx="100" cy="100" r="86" class="g-bg"/><path id="gArc" class="g-arc" d="M 30 150 A 86 86 0 1 1 170 150" pathLength="100"/><g id="gNeedle"><line x1="100" y1="100" x2="100" y2="38" class="g-needle"/></g><circle cx="100" cy="100" r="9" class="g-hub"/></svg>
+    <div class="g-read"><b id="gSpeed">0</b><span>KM/H</span></div>
+  </div>
+  <div class="hazard"></div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div class="ticker" aria-hidden="true"><div class="ticker-track" id="tickerTrack"></div></div>
+
+<!-- ============ THE GAME ============ -->
+<section class="sec" id="game">
+  <div class="wrap">
+    <header class="sec-head reveal"><p class="eyebrow">Level 1 · The ride</p><h2>Life on a <span class="hl">tro tro</span></h2>
+      <p class="lead">You drive. Your mate hangs out of the window shouting the destination. The passengers want to get there fast, safe and cheap. Troski Simulator puts you in the driver's seat of the vehicle that moves Ghana.</p></header>
+    <div class="cards">
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><path d="M6 30h36v-8l-6-10H14l-8 10zM12 30v6M36 30v6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="36" r="4" fill="currentColor"/><circle cx="34" cy="36" r="4" fill="currentColor"/></svg></div>
+        <h3>Passengers, fares &amp; tips</h3><p>Pick people up at tro tro stops, drop them where they are going, and collect the fare. Smooth driving keeps the comfort rating, and the tips, high. Your mate announces the stop from the pavement.</p></article>
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><path d="M24 6l14 6v10c0 9-6 16-14 20C16 38 10 31 10 22V12z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M17 24l5 5 9-10" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Police checkpoints</h3><p>Officers wave you in, the barrier lifts only when you are cleared, and the cars queue behind you like real traffic. Nobody jumps the line.</p></article>
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><path d="M10 40V10h16v30M10 22h16M26 16l8 6v14a3 3 0 0 0 6 0V18l-6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Fuel, damage &amp; the workshop</h3><p>Fill up at stations on the roads, mind the potholes and the bumps, and repair at the mechanic when the van starts to complain. How hard you hit something decides how much it hurts.</p></article>
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><path d="M14 30a8 8 0 1 1 3-15 9 9 0 0 1 17 3 6 6 0 0 1 0 12z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M16 38l-2 5M24 38l-2 5M32 38l-2 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <h3>Weather &amp; night</h3><p>Rain, storms, dust and floods that are never clean. The sun sets, the streetlights come on, and the markets light up with fireworks.</p></article>
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 12v12l8 4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <h3>An open world</h3><p>Main roads, side streets and village tracks across the city. Jams can start anywhere, so the shortcuts you learn are the ones that pay.</p></article>
+      <article class="card panel reveal"><div class="ico"><svg viewBox="0 0 48 48"><path d="M8 34l6-16h20l6 16M8 34h32M12 34v5M36 34v5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 24h12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <h3>Make it yours</h3><p>Paint, rims, stripes, number plates and the slogan on your windscreen. <b class="slogan">GOD'S TIME IS BEST</b> never goes out of style.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODES ============ -->
+<section class="sec sec-dark" id="modes">
+  <div class="wrap">
+    <header class="sec-head reveal"><p class="eyebrow">Level 2 · Choose your shift</p><h2>Four ways to <span class="hl">work the road</span></h2>
+      <p class="lead">Every shift starts at a random tro tro station or village somewhere in the city. Pick a mode, then pick your battles.</p></header>
+    <div class="modes" id="modeGrid"></div>
+    <div class="mode-panel panel reveal" id="modePanel" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ============ WORLD / MAP ============ -->
+<section class="sec" id="world">
+  <div class="wrap two">
+    <div class="reveal">
+      <p class="eyebrow">Level 3 · The map</p><h2>A city you can <span class="hl">actually drive</span></h2>
+      <p class="lead">Markets that never sleep, estates, village roads and the landmarks you know. Tap a pin on the radar to see where it sits on the game map.</p>
+      <div class="landmarks" id="lmList"></div>
+    </div>
+    <div class="radar-wrap reveal">
+      <div class="radar" id="radar" role="img" aria-label="Stylised map of Accra with game locations">
+        <div class="radar-sweep"></div>
+        <div class="radar-sea">ATLANTIC OCEAN</div>
+        <div id="pins"></div>
+        <span class="radar-n">N</span>
+      </div>
+      <div class="pin-info panel" id="pinInfo"><b>Tap a pin</b><span>Locations are placed on the game's own map.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WALLPAPERS ============ -->
+<section class="sec sec-dark" id="wallpapers">
+  <div class="wrap">
+    <header class="sec-head reveal"><p class="eyebrow">Level 4 · The garage</p><h2>Screenshots &amp; <span class="hl">4K wallpapers</span></h2>
+      <p class="lead">Straight from the game, captured at 3840 x 2160 with the sun at the right angle. Tap a shot to see it big, then download it in 4K for your desktop, phone or whatever you like.</p></header>
+    <div class="collect panel reveal"><div class="collect-top"><b id="colTxt">0 / 16 collected</b><span>Download wallpapers to fill your collection</span></div><div class="collect-bar"><i id="colFill"></i></div></div>
+    <div class="filters" id="filters" role="tablist" aria-label="Filter screenshots">
+      <button class="fchip is-on" data-f="all" role="tab" aria-selected="true">All</button>
+      <button class="fchip" data-f="troski" role="tab">The Troski</button>
+      <button class="fchip" data-f="villages" role="tab">Villages</button>
+      <button class="fchip" data-f="markets" role="tab">Markets</button>
+      <button class="fchip" data-f="landmarks" role="tab">Landmarks</button>
+      <button class="fchip" data-f="night" role="tab">Night &amp; fireworks</button>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</section>
+
+<!-- ============ ACHIEVEMENTS ============ -->
+<section class="sec" id="trophies">
+  <div class="wrap">
+    <header class="sec-head reveal"><p class="eyebrow">Bonus level · Side quests</p><h2>Page <span class="hl">achievements</span></h2>
+      <p class="lead">There are cedi coins hidden around this page and a few things to try. Your progress is saved on this device.</p></header>
+    <div class="trophies" id="trophyGrid"></div>
+  </div>
+</section>
+
+<!-- ============ GET THE GAME ============ -->
+<section class="sec cta-sec" id="get">
+  <div class="cta-bg"></div>
+  <div class="wrap cta-inner reveal">
+    <p class="eyebrow">Final level</p>
+    <h2>The shift is <span class="hl">about to start</span></h2>
+    <p class="lead">Troski Simulator is in development for Android by SBMind Interactive. Follow SBMind Technologies to hear when you can take the wheel.</p>
+    <div class="cta-row center">
+      <a class="btn btn-gold" href="https://www.sbmindtechnologies.com" rel="noopener"><span>SBMIND TECHNOLOGIES</span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M8 4l8 8-8 8"/></svg></a>
+      <a class="btn btn-ghost" href="#wallpapers"><span>BACK TO WALLPAPERS</span></a>
+    </div>
+  </div>
+  <div class="hazard"></div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <img src="/img/logo.png" alt="Troski Simulator" width="130" height="auto" loading="lazy">
+    <p>&copy; 2026 SBMind Technologies. Troski Simulator is made by SBMind Interactive in Ghana. Screenshots are captured in-game at 4K.</p>
+    <p><a href="https://www.sbmindtechnologies.com" rel="noopener">sbmindtechnologies.com</a></p>
+  </div>
+</footer>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Screenshot viewer">
+  <button class="lb-x" id="lbClose" aria-label="Close">&times;</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous">&#8249;</button>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next">&#8250;</button>
+  <figure class="lb-fig"><img id="lbImg" alt=""><figcaption>
+    <div class="lb-meta"><b id="lbTitle"></b><span id="lbSub"></span><p id="lbBlurb"></p></div>
+    <div class="lb-dl"><a class="btn btn-gold" id="lbDl4k" download><span id="lbDl4kTxt">DOWNLOAD 4K</span></a><a class="btn btn-ghost" id="lbDl1080" download><span id="lbDl1080Txt">1080p</span></a></div>
+  </figcaption></figure>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="coins" id="coinLayer"></div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>

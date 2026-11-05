@@ -1,0 +1,201 @@
+[
+ {
+  "id": "sunrise-shift",
+  "title": "Sunrise Shift",
+  "place": "Village road",
+  "time": "Dawn",
+  "tags": [
+   "villages",
+   "troski"
+  ],
+  "blurb": "First fare of the day. The troski rolls out as the sun comes up over the village.",
+  "mb4k": 1.4,
+  "mb1080": 0.4
+ },
+ {
+  "id": "low-and-loud",
+  "title": "Low and Loud",
+  "place": "Village outskirts",
+  "time": "Golden hour",
+  "tags": [
+   "villages",
+   "troski"
+  ],
+  "blurb": "Ground-level hero shot with the sunset in the grille.",
+  "mb4k": 1.1,
+  "mb1080": 0.3
+ },
+ {
+  "id": "market-run",
+  "title": "Market Run",
+  "place": "Makola market road",
+  "time": "Morning",
+  "tags": [
+   "markets",
+   "troski"
+  ],
+  "blurb": "Chase-cam through the market district, umbrellas and streetlights all the way down.",
+  "mb4k": 1.8,
+  "mb1080": 0.5
+ },
+ {
+  "id": "kaneshie-cruise",
+  "title": "Kaneshie Cruise",
+  "place": "Kaneshie",
+  "time": "Late afternoon",
+  "tags": [
+   "markets",
+   "troski"
+  ],
+  "blurb": "Long shadows, fresh asphalt and a mate leaning out of the window.",
+  "mb4k": 2.0,
+  "mb1080": 0.6
+ },
+ {
+  "id": "independence-arch",
+  "title": "Independence Arch",
+  "place": "Independence Avenue",
+  "time": "Midday",
+  "tags": [
+   "landmarks"
+  ],
+  "blurb": "The arch watching over the road, the way you see it from the driver's seat.",
+  "mb4k": 1.6,
+  "mb1080": 0.4
+ },
+ {
+  "id": "national-theatre",
+  "title": "National Theatre",
+  "place": "Accra",
+  "time": "Midday",
+  "tags": [
+   "landmarks"
+  ],
+  "blurb": "The curved roof of the National Theatre at the end of a quiet junction.",
+  "mb4k": 1.7,
+  "mb1080": 0.5
+ },
+ {
+  "id": "fireworks-night",
+  "title": "Fireworks Night",
+  "place": "Market district",
+  "time": "Night",
+  "tags": [
+   "night",
+   "markets"
+  ],
+  "blurb": "The markets celebrate with fireworks over the stalls after dark.",
+  "mb4k": 0.8,
+  "mb1080": 0.2
+ },
+ {
+  "id": "umbrella-sea",
+  "title": "Umbrella Sea",
+  "place": "Market district",
+  "time": "Midday",
+  "tags": [
+   "markets"
+  ],
+  "blurb": "Hundreds of stall umbrellas seen from above.",
+  "mb4k": 2.1,
+  "mb1080": 0.6
+ },
+ {
+  "id": "village-dawn",
+  "title": "Village Dawn",
+  "place": "Greater Accra village",
+  "time": "Sunrise",
+  "tags": [
+   "villages"
+  ],
+  "blurb": "Warm light, red earth and a quiet street waking up.",
+  "mb4k": 1.5,
+  "mb1080": 0.4
+ },
+ {
+  "id": "village-morning",
+  "title": "Morning in the Village",
+  "place": "Greater Accra village",
+  "time": "Morning",
+  "tags": [
+   "villages",
+   "markets"
+  ],
+  "blurb": "A village stall row with the city skyline behind it.",
+  "mb4k": 2.0,
+  "mb1080": 0.6
+ },
+ {
+  "id": "village-from-above",
+  "title": "Village From Above",
+  "place": "Greater Accra village",
+  "time": "Morning",
+  "tags": [
+   "villages"
+  ],
+  "blurb": "Rooftops, walls and palms from up high.",
+  "mb4k": 2.3,
+  "mb1080": 0.6
+ },
+ {
+  "id": "village-road",
+  "title": "Village Road",
+  "place": "Greater Accra",
+  "time": "Sunrise",
+  "tags": [
+   "villages"
+  ],
+  "blurb": "The tarred village road at first light, church tower on the horizon.",
+  "mb4k": 1.6,
+  "mb1080": 0.4
+ },
+ {
+  "id": "black-star-square",
+  "title": "Black Star Square",
+  "place": "Black Star Square",
+  "time": "Midday",
+  "tags": [
+   "landmarks"
+  ],
+  "blurb": "The Black Star gate across the junction, lit from the front.",
+  "mb4k": 1.6,
+  "mb1080": 0.4
+ },
+ {
+  "id": "troski-at-the-gate",
+  "title": "Troski at the Gate",
+  "place": "Black Star Square",
+  "time": "Afternoon",
+  "tags": [
+   "landmarks",
+   "troski"
+  ],
+  "blurb": "A troski passing the Black Star gate.",
+  "mb4k": 2.2,
+  "mb1080": 0.6
+ },
+ {
+  "id": "mausoleum",
+  "title": "The Mausoleum",
+  "place": "Kwame Nkrumah Memorial Park",
+  "time": "Late afternoon",
+  "tags": [
+   "landmarks"
+  ],
+  "blurb": "The Memorial Park mausoleum standing over the lawn.",
+  "mb4k": 1.6,
+  "mb1080": 0.4
+ },
+ {
+  "id": "umbrella-street",
+  "title": "Umbrella Street",
+  "place": "Market district",
+  "time": "Morning",
+  "tags": [
+   "markets"
+  ],
+  "blurb": "A high corner view of the stalls with the road traffic rolling past.",
+  "mb4k": 2.6,
+  "mb1080": 0.7
+ }
+]
