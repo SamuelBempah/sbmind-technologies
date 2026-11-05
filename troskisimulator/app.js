@@ -42,7 +42,7 @@
     { id: 'coins3', ico: '🪙', name: 'Pocket Change', desc: 'Collect 3 hidden cedi coins.', prog: () => [Math.min(S.coins.length, 3), 3] },
     { id: 'coins12', ico: '💰', name: 'Cedi Collector', desc: 'Find all ' + TOTAL_COINS + ' coins on the page.', prog: () => [S.coins.length, TOTAL_COINS] },
     { id: 'modes', ico: '🚌', name: 'Shift Planner', desc: 'Look at all four shift modes.', prog: () => [S.modes.length, 4] },
-    { id: 'pins', ico: '📍', name: 'Map Reader', desc: 'Tap 5 pins on the Accra radar.', prog: () => [Math.min(S.pins.length, 5), 5] },
+    { id: 'pins', ico: '📍', name: 'Map Reader', desc: 'Tap 5 pins on the Gold Coast City radar.', prog: () => [Math.min(S.pins.length, 5), 5] },
     { id: 'dl1', ico: '🖼️', name: 'Wallpaper Rookie', desc: 'Download your first 4K wallpaper.', prog: () => [Math.min(S.dl.length, 1), 1] },
     { id: 'dl8', ico: '🔥', name: 'Wallpaper Hoarder', desc: 'Download 8 wallpapers.', prog: () => [Math.min(S.dl.length, 8), 8] },
     { id: 'dlall', ico: '🏆', name: 'Full Garage', desc: 'Collect every wallpaper.', prog: () => [S.dl.length, (window.__SHOTS || []).length || 16] },
@@ -94,7 +94,7 @@
   }
 
   /* ---------- ticker ---------- */
-  const SLOGANS = ["GOD'S TIME IS BEST", 'NO CONDITION IS PERMANENT', 'TROTRO STATION', 'ONLY GOD CAN JUDGE ME', 'MIND THE POTHOLES', "DON'T DRIVE LIKE ME", 'ACCRA', 'FARES + TIPS'];
+  const SLOGANS = ["GOD'S TIME IS BEST", 'NO CONDITION IS PERMANENT', 'TROTRO STATION', 'ONLY GOD CAN JUDGE ME', 'MIND THE POTHOLES', "DON'T DRIVE LIKE ME", 'GOLD COAST CITY', 'FARES + TIPS'];
   (function () {
     const t = $('#tickerTrack'); if (!t) return; let h = '';
     for (let r = 0; r < 4; r++) SLOGANS.forEach(s => { h += '<span>' + s + '</span><span class="dot">&#9679;</span>'; });
@@ -103,7 +103,7 @@
 
   /* ---------- modes ---------- */
   const MODES = [
-    { name: 'Free Roam', tag: 'No rules // Just drive', blurb: 'Cruise Accra with no timer and no job. Learn the roads, find the markets, dodge the potholes. Police checkpoints still apply.', reward: 'No payout', diff: 15, pay: 5, img: '/img/modes/mode_0.webp' },
+    { name: 'Free Roam', tag: 'No rules // Just drive', blurb: 'Cruise Gold Coast City with no timer and no job. Learn the roads, find the markets, dodge the potholes. Police checkpoints still apply.', reward: 'No payout', diff: 15, pay: 5, img: '/img/modes/mode_0.webp' },
     { name: 'Route', tag: 'Pick up // Drop off // Get paid', blurb: 'Collect passengers at tro tro stops and drop them where they are going. Smooth driving keeps the comfort rating, and the tips, high.', reward: 'Fares + tips', diff: 50, pay: 65, img: '/img/modes/mode_1.webp' },
     { name: 'Carrier', tag: 'Fragile // Haul // Deliver', blurb: 'Haul goods between markets and kiosks. Every pothole, bump and crash damages the cargo, and the payout follows what arrives intact.', reward: 'Payout x cargo health', diff: 70, pay: 75, img: '/img/modes/mode_2.webp' },
     { name: 'Rush Hour', tag: 'Race the clock // Chain fares', blurb: 'Two and a half minutes on the clock. Every drop-off adds time. Chain fares as fast as you dare. The checkpoints will not wait.', reward: 'Fares + time bonus', diff: 92, pay: 90, img: '/img/modes/mode_3.webp' }
@@ -135,10 +135,10 @@
     { n: 'Independence Square', x: 0, z: 150, k: 'landmark', d: 'Black Star Square, Independence Arch, the Kwame Nkrumah Mausoleum, Jubilee House and the National Theatre all sit within a few hundred metres.' },
     { n: 'Osu Castle', x: 1260, z: -60, k: 'landmark', d: 'The old castle walls on the coast, with the flag flying over them.' },
     { n: 'Jamestown Lighthouse', x: -2340, z: -60, k: 'landmark', d: 'The lighthouse at the western end of the coast road.' },
-    { n: 'Accra Sports Stadium', x: -480, z: 1020, k: 'landmark', d: 'The big bowl of the stadium, with its own surrounding streets.' },
+    { n: 'Gold Coast Sports Stadium', x: -480, z: 1020, k: 'landmark', d: 'The big bowl of the stadium, with its own surrounding streets.' },
     { n: 'Kwame Nkrumah Circle', x: -900, z: 1980, k: 'landmark', d: 'The famous interchange, with a real flyover you can drive over and under.' },
     { n: 'Kotoka International Airport', x: 2340, z: 3540, k: 'landmark', d: 'Terminal, runways and the busy roads that feed them.' },
-    { n: 'Accra Mall', x: 1020, z: 3300, k: 'landmark', d: 'Shopping, car parks and a lot of fares waiting to be picked up.' },
+    { n: 'Gold Coast Mall', x: 1020, z: 3300, k: 'landmark', d: 'Shopping, car parks and a lot of fares waiting to be picked up.' },
     { n: 'University of Ghana', x: 1380, z: 4740, k: 'landmark', d: 'The Balme Library and the campus roads around it.' },
     { n: 'Makola Market', x: -951, z: 664, k: 'market', d: 'Wall-to-wall stalls and umbrellas, and the busiest roads in the game.' },
     { n: 'Kaneshie Market', x: -2637, z: 1370, k: 'market', d: 'Stall rows, shop fronts and hawkers working the stopped cars.' },
@@ -146,7 +146,7 @@
     { n: 'Labadi coast road', x: 2753, z: -122, k: 'place', d: 'The sea on one side, the town on the other, and a long golden-hour run.' },
     { n: 'Achimota Forest', x: -2638, z: 4512, k: 'place', d: 'Dirt roads through the trees on the north-western edge of the map.' },
     { n: 'East Legon', x: 3049, z: 4315, k: 'place', d: 'Wide estate roads, walls and gates in the north-east.' },
-    { n: 'Greater Accra villages', x: 2521, z: 1731, k: 'place', d: 'Red earth, brick houses and village roads. Many shifts start here.' }
+    { n: 'Greater Gold Coast villages', x: 2521, z: 1731, k: 'place', d: 'Red earth, brick houses and village roads. Many shifts start here.' }
   ];
   (function () {
     const host = $('#pins'), info = $('#pinInfo'), list = $('#lmList'); if (!host) return;

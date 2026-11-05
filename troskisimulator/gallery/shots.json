@@ -66,7 +66,7 @@
  {
   "id": "national-theatre",
   "title": "National Theatre",
-  "place": "Accra",
+  "place": "Gold Coast City",
   "time": "Midday",
   "tags": [
    "landmarks"
@@ -103,7 +103,7 @@
  {
   "id": "village-dawn",
   "title": "Village Dawn",
-  "place": "Greater Accra village",
+  "place": "Greater Gold Coast village",
   "time": "Sunrise",
   "tags": [
    "villages"
@@ -115,7 +115,7 @@
  {
   "id": "village-morning",
   "title": "Morning in the Village",
-  "place": "Greater Accra village",
+  "place": "Greater Gold Coast village",
   "time": "Morning",
   "tags": [
    "villages",
@@ -128,7 +128,7 @@
  {
   "id": "village-from-above",
   "title": "Village From Above",
-  "place": "Greater Accra village",
+  "place": "Greater Gold Coast village",
   "time": "Morning",
   "tags": [
    "villages"
@@ -140,7 +140,7 @@
  {
   "id": "village-road",
   "title": "Village Road",
-  "place": "Greater Accra",
+  "place": "Greater Gold Coast",
   "time": "Sunrise",
   "tags": [
    "villages"
