@@ -198,11 +198,11 @@ const W0 = Date.UTC(2026, 10, 7, 19, 30);
     for (let n = 1; n <= 7; n++) {
       const got = n < 7 && has(n), el = document.createElement('div');
       el.className = 'slot panel' + (got ? ' is-on' : '') + (n === 7 ? ' final' : ''); el.innerHTML = '<div class="no"></div><div class="st"></div>';
-      $('.no', el).textContent = n === 7 ? '?' : n; $('.st', el).textContent = got ? 'FOUND' : n === 7 ? 'NOT PRINTED YET' : 'HIDDEN'; row.appendChild(el);
+      $('.no', el).textContent = n === 7 ? '?' : n; $('.st', el).textContent = got ? 'FOUND' : n === 7 ? 'IT MOVES' : 'HIDDEN'; row.appendChild(el);
     }
     const next = [1, 2, 3, 4, 5, 6].find(n => !has(n));
     $('#clueNo').textContent = next ? 'CLUE FOR TICKET ' + next : 'TICKET MASTER';
-    $('#clueTxt').textContent = next ? CLUES[next] : 'You hold all six tickets. Ticket 7 is still being printed. Check back later.';
+    $('#clueTxt').textContent = next ? CLUES[next] : 'You hold all six tickets. Ticket 7 is playing hide and seek and its moving and hiding at where you least expect it.';
     $('#huntYou').textContent = S.tickets.length + ' / ' + TIX;
     renderBoard();
   }
