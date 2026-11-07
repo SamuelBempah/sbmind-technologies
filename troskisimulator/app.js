@@ -7,7 +7,7 @@
 
   /* ---------- saved progress ---------- */
   const KEY = 'troski_site_v1';
-  const blank = { coins: [], dl: [], modes: [], pins: [], views: [], honk: 0, muted: false, shown: [], radioOff: false };
+  const blank = { coins: [], dl: [], modes: [], pins: [], views: [], honk: 0, muted: false, shown: [], radioOff: false, tickets: [], seed: 0 };
   let S;
   try { S = Object.assign({}, blank, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, blank); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* private mode */ } };
@@ -52,7 +52,9 @@
     { id: 'dl8', ico: '🔥', name: 'Wallpaper Hoarder', desc: 'Download 8 wallpapers.', prog: () => [Math.min(S.dl.length, 8), 8] },
     { id: 'dlall', ico: '🏆', name: 'Full Garage', desc: 'Collect every wallpaper.', prog: () => [S.dl.length, (window.__SHOTS || []).length || 16] },
     { id: 'night', ico: '🎆', name: 'Night Owl', desc: 'Open a night shot.', prog: () => [S.views.some(id => (window.__SHOTS || []).find(s => s.id === id && s.tags.includes('night'))) ? 1 : 0, 1] },
-    { id: 'viewer', ico: '👀', name: 'Photo Mode', desc: 'View 5 screenshots full size.', prog: () => [Math.min(S.views.length, 5), 5] }
+    { id: 'viewer', ico: '👀', name: 'Photo Mode', desc: 'View 5 screenshots full size.', prog: () => [Math.min(S.views.length, 5), 5] },
+    { id: 'tix1', ico: '🎫', name: 'Ticket Spotter', desc: 'Find your first golden ticket.', prog: () => [Math.min(S.tickets.length, 1), 1] },
+    { id: 'tix6', ico: '🎟️', name: 'Ticket Master', desc: 'Find all 6 golden tickets.', prog: () => [S.tickets.length, 6] }
   ];
   function renderTrophies(silent) {
     const g = $('#trophyGrid'); if (!g) return;
@@ -71,15 +73,140 @@
   /* ---------- XP / level / cash ---------- */
   const LEVELS = ['NOVICE', 'DRIVER', 'CONDUCTOR', 'MATE', 'STATION MASTER', 'ROUTE KING', 'LEGEND'];
   let scrollPct = 0, lastLevel = 0;
-  function xpNow() { return Math.round(scrollPct * 60 + S.coins.length * 8 + S.dl.length * 6 + S.shown.length * 12); }
+  function xpNow() { return Math.round(scrollPct * 60 + S.coins.length * 8 + S.dl.length * 6 + S.shown.length * 12 + S.tickets.length * 10); }
   function updateHud() {
     const xp = xpNow(), per = 40, lvl = Math.floor(xp / per), into = xp - lvl * per;
     $('#lvl').textContent = 'LVL ' + (lvl + 1); $('#lvlTitle').textContent = LEVELS[Math.min(lvl, LEVELS.length - 1)];
     $('#xpNum').textContent = xp + ' XP'; $('#xpFill').style.width = (into / per * 100) + '%';
     $('#cash').textContent = 'GHS ' + (S.coins.length * 5);
+    $('#tixCount').textContent = S.tickets.length + '/6'; updateTixVisibility();
     if (lastLevel && lvl > lastLevel) { toast('⬆️', 'Level up!', 'You are now level ' + (lvl + 1) + ': ' + LEVELS[Math.min(lvl, LEVELS.length - 1)]); levelUp(); }
     lastLevel = lvl;
   }
+
+  /* ---------- ticket hunt (experiment): per-visitor hidden tickets + a simulated crowd ---------- */
+  const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  if (!S.seed) { S.seed = ((Math.random() * 4294967295) >>> 0) || 1; save(); }
+  // every visitor gets their own seed, so the hiding places differ per person
+  const HUNT = (() => {
+    const r = mulberry(S.seed), side = () => (r() < .5 ? .03 + r() * .09 : .88 + r() * .09);
+    const secs1 = ['game', 'modes', 'world', 'wallpapers'], secs2 = ['trophies', 'get', 'hunt', 'world'];
+    const s1 = secs1[Math.floor(r() * secs1.length)], pool2 = secs2.filter(x => x !== s1), s2 = pool2[Math.floor(r() * pool2.length)];
+    return { t1: { sec: s1, fx: side(), fy: .12 + r() * .76 }, t2: { sec: s2, fx: side(), fy: .12 + r() * .76 }, pinR: r(), shotR: r(), lx: 12 + r() * 70, ly: 14 + r() * 38, radioN: 2 + Math.floor(r() * 3) };
+  })();
+  const TIX = 6, has = n => S.tickets.includes(n);
+  const CLUES = [null,
+    'A golden ticket is bobbing somewhere on this page. Scroll slowly and check the edges.',
+    'Ticket 2 is shy. It only shows up once you are deep into the page, and it is small.',
+    'Tickets love the radar. Once you hold two, one of the pins on the map hides one. Keep tapping pins.',
+    'A screenshot holds a secret. Once you hold three, open screenshots full size and watch for a flash.',
+    'Make some noise. Once you hold four, give the horn three short blasts, back to back.',
+    'Tune in and stay tuned. Once you hold five, it rides the radio between stations, but only for a moment.'];
+
+  function take(n, el) {
+    if (has(n)) return;
+    S.tickets.push(n); save();
+    if (el) { el.classList.add('pop'); setTimeout(() => el.remove(), 520); }
+    toast('🎫', 'Ticket ' + n + ' found', S.tickets.length + ' of ' + TIX + ' golden tickets');
+    fanfare(); renderHunt(); renderTrophies(); updateHud();
+  }
+  // a short-lived ticket for the later, harder finds
+  function miniTicket(n, parent, css, life) {
+    if (has(n) || S.tickets.length < n - 1 || !parent || parent.querySelector('.tix[data-n="' + n + '"]')) return;
+    const b = document.createElement('button'); b.className = 'tix mini'; b.type = 'button'; b.dataset.n = n; b.setAttribute('aria-label', 'Collect golden ticket'); b.textContent = '★';
+    Object.assign(b.style, css);
+    b.addEventListener('click', e => { e.stopPropagation(); take(n, b); });
+    parent.appendChild(b);
+    setTimeout(() => { if (b.isConnected && !b.classList.contains('pop')) { b.classList.add('gone'); setTimeout(() => b.remove(), 320); } }, life);
+  }
+  // tickets 1 and 2 sit on the page itself, in a different place for each visitor
+  function placeTix() {
+    const layer = $('#tixLayer'); if (!layer) return; layer.innerHTML = '';
+    [[1, HUNT.t1], [2, HUNT.t2]].forEach(([n, h]) => {
+      if (has(n)) return;
+      const s = document.getElementById(h.sec); if (!s) return; const r = s.getBoundingClientRect();
+      const b = document.createElement('button'); b.className = 'tix' + (n === 2 ? ' shy' : ''); b.type = 'button'; b.dataset.n = n; b.setAttribute('aria-label', 'Collect golden ticket'); b.textContent = '★';
+      const w = n === 2 ? 32 : 46;
+      b.style.left = Math.max(4, Math.min(document.documentElement.clientWidth - w - 4, r.left + scrollX + r.width * h.fx - w / 2)) + 'px';
+      b.style.top = (r.top + scrollY + r.height * h.fy) + 'px';
+      b.addEventListener('click', () => take(n, b));
+      layer.appendChild(b);
+    });
+    updateTixVisibility();
+  }
+  function updateTixVisibility() { const el = $('#tixLayer .tix.shy'); if (el) el.style.display = scrollPct > .5 ? '' : 'none'; }
+  const honks = [];
+  function huntHonk() {
+    const t = performance.now(); honks.push(t); while (honks.length && t - honks[0] > 1800) honks.shift();
+    if (honks.length >= 3) { honks.length = 0; const r = $('#horn').getBoundingClientRect(); miniTicket(5, document.body, { position: 'fixed', left: Math.max(4, r.left - 4) + 'px', top: (r.bottom + 10) + 'px' }, 3000); }
+  }
+  let hops = 0;
+  function huntRadio() {
+    hops++;
+    if (hops >= HUNT.radioN && (hops === HUNT.radioN || Math.random() < .3)) { const r = $('#radio').getBoundingClientRect(); miniTicket(6, document.body, { position: 'fixed', left: Math.max(4, r.right - 150) + 'px', top: Math.max(4, r.top - 40) + 'px' }, 2200); }
+  }
+  function huntLightbox(s) {
+    $$('.tix', lb).forEach(e => e.remove());
+    if (S.tickets.length >= 3 && !has(4) && SHOTS.length && s.id === SHOTS[Math.floor(HUNT.shotR * SHOTS.length)].id) {
+      setTimeout(() => { if (!lb.hidden && view[cur] === s) miniTicket(4, lb, { left: HUNT.lx + '%', top: HUNT.ly + '%' }, 3000); }, 1400);
+    }
+  }
+
+  /* simulated crowd: the same for every visitor, replayed from the start of each week (Mon 00:00 UTC) */
+  const DAY = 864e5, HR = 36e5, simDay = parseFloat(new URLSearchParams(location.search).get('simday'));
+const W0 = Date.UTC(2026, 10, 7, 19, 30);
+  const T0 = Date.now(), clock = () => (isNaN(simDay) ? Date.now() : W0 + simDay * DAY + (Date.now() - T0));
+  const EVENTS = (() => {
+    const r = mulberry(Math.floor(W0 / DAY) * 7919 + 13), ev = [], used = new Set();
+    const F = ['Kofi', 'Ama', 'Kwame', 'Akosua', 'Yaw', 'Abena', 'Kwesi', 'Efua', 'Nana', 'Esi', 'Kojo', 'Adwoa', 'Femi', 'Sena', 'Mensah', 'Selorm'];
+    const T = ['Drives', 'Mate', 'Roads', 'Gold', 'Fare', 'Pothole', 'Horn', 'Rider', 'Shift', 'Ace'];
+    const nm = () => { let n; do { n = F[Math.floor(r() * F.length)] + T[Math.floor(r() * T.length)] + (10 + Math.floor(r() * 89)); } while (used.has(n)); used.add(n); return n; };
+    const G = [0, 0, 3, 6, 10, 16, 24, 30];                        // average hours it takes to get from the previous ticket to ticket k
+    for (let f = 0; f < 10; f++) {                                  // the ten simulated final-badge claims; the tenth lands at a random time on the last day
+      const who = nm(); let t = W0 + (f < 9 ? 4.5 + r() * 1.4 : 6 + r() * .98) * DAY;
+      ev.push({ who, k: 7, t });
+      for (let k = 6; k >= 1; k--) { t = Math.max(t - G[k + 1] * HR * (.5 + r()), W0 + k * 6e4); ev.push({ who, k, t }); }
+    }
+    const P = [0, .78, .6, .5, .4, .3];                             // chance of getting past ticket k
+    for (let h = 0; h < 140; h++) {
+      const who = nm(); let t = W0 + Math.pow(r(), 1.6) * 6.6 * DAY;
+      for (let k = 1; k <= 6; k++) { ev.push({ who, k, t }); if (k === 6 || r() > P[k]) break; t += G[k + 1] * HR * (.4 + r() * 1.2); }
+    }
+    return ev.sort((a, b) => a.t - b.t);
+  })();
+  const ago = ms => { const m = Math.max(1, Math.round(ms / 6e4)); return m < 60 ? m + 'm ago' : m < 1440 ? Math.floor(m / 60) + 'h ago' : Math.floor(m / 1440) + 'd ago'; };
+  function renderBoard() {
+    const box = $('#boardRows'); if (!box) return;
+    const now = clock(), seen = EVENTS.filter(e => e.t <= now), c = [0, 0, 0, 0, 0, 0, 0, 0]; seen.forEach(e => c[e.k]++);
+    const max = Math.max(1, c[1]); box.innerHTML = '';
+    for (let n = 1; n <= 6; n++) {
+      const row = document.createElement('div'); row.className = 'brow'; row.innerHTML = '<span></span><div class="track"><i></i></div><b></b>';
+      $('span', row).textContent = 'Ticket ' + n; $('i', row).style.width = (c[n] / max * 100) + '%'; $('b', row).textContent = c[n]; box.appendChild(row);
+    }
+    $('#pips').innerHTML = Array.from({ length: 10 }, (_, i) => '<i class="' + (i < c[7] ? 'on' : '') + '"></i>').join('');
+    $('#finalTxt').textContent = c[7] >= 10 ? 'All 10 final badges claimed' : c[7] + ' / 10 claimed';
+    const left = W0 + 7 * DAY - now;
+    $('#huntLeft').textContent = left <= 0 ? 'HUNT CLOSED' : 'ENDS IN ' + Math.floor(left / DAY) + 'D ' + String(Math.floor(left % DAY / HR)).padStart(2, '0') + 'H';
+    const feed = $('#feed'); feed.innerHTML = '';
+    seen.slice(-6).reverse().forEach(e => {
+      const li = document.createElement('li'); li.innerHTML = '<b></b> <span></span> <time></time>';
+      $('b', li).textContent = e.who; $('span', li).textContent = e.k === 7 ? 'claimed a final badge' : 'found ticket ' + e.k; $('time', li).textContent = ago(now - e.t); feed.appendChild(li);
+    });
+  }
+  function renderHunt() {
+    const row = $('#tixRow'); if (!row) return; row.innerHTML = '';
+    for (let n = 1; n <= 7; n++) {
+      const got = n < 7 && has(n), el = document.createElement('div');
+      el.className = 'slot panel' + (got ? ' is-on' : '') + (n === 7 ? ' final' : ''); el.innerHTML = '<div class="no"></div><div class="st"></div>';
+      $('.no', el).textContent = n === 7 ? '?' : n; $('.st', el).textContent = got ? 'FOUND' : n === 7 ? 'NOT PRINTED YET' : 'HIDDEN'; row.appendChild(el);
+    }
+    const next = [1, 2, 3, 4, 5, 6].find(n => !has(n));
+    $('#clueNo').textContent = next ? 'CLUE FOR TICKET ' + next : 'TICKET MASTER';
+    $('#clueTxt').textContent = next ? CLUES[next] : 'You hold all six tickets. Ticket 7 is still being printed. Check back later.';
+    $('#huntYou').textContent = S.tickets.length + ' / ' + TIX;
+    renderBoard();
+  }
+  renderHunt(); setInterval(renderBoard, 20000);
 
   /* ---------- scroll: progress, parallax, gauge ---------- */
   let lastY = scrollY, speed = 0, ticking = false;
@@ -166,6 +293,7 @@
       const go = () => {
         els.forEach((e, k) => e.classList.toggle('is-on', k === i)); chips.forEach((e, k) => e.classList.toggle('is-on', k === i));
         $('b', info).textContent = p.n; $('span', info).textContent = p.d; pickSfx();
+        if (i === Math.floor(HUNT.pinR * PINS.length)) miniTicket(3, host, { left: b.style.left, top: b.style.top, margin: '-38px 0 0 -21px' }, 4000);
         if (addTo('pins', i)) { save(); renderTrophies(); updateHud(); }
       };
       b.addEventListener('click', go); c.addEventListener('click', go);
@@ -213,6 +341,7 @@
     d4.onclick = () => markDownload(s.id); d1.onclick = () => markDownload(s.id);
     if (lb.hidden) play('whoosh', 0.6); lb.hidden = false; document.body.style.overflow = 'hidden'; $('#lbClose').focus();
     if (addTo('views', s.id)) { save(); renderTrophies(); updateHud(); }
+    huntLightbox(s);
   }
   const closeLb = () => { lb.hidden = true; document.body.style.overflow = ''; };
   $('#lbClose').addEventListener('click', closeLb);
@@ -251,7 +380,7 @@
 
   /* ---------- horn / mute ---------- */
   $('#startShift').addEventListener('click', () => play('play', 0.7));
-  $('#horn').addEventListener('click', () => { honk(); S.honk++; save(); renderTrophies(); updateHud(); });
+  $('#horn').addEventListener('click', () => { honk(); huntHonk(); S.honk++; save(); renderTrophies(); updateHud(); });
   const muteBtn = $('#muteBtn');
   function paintMute() { $('#muteTxt').textContent = S.muted ? 'SFX OFF' : 'SFX ON'; muteBtn.setAttribute('aria-pressed', S.muted); }
   muteBtn.addEventListener('click', () => { S.muted = !S.muted; save(); paintMute(); });
@@ -295,7 +424,7 @@
     function next() {
       clearInterval(failTimer); if (!on) return; const st = pick(); if (!st) { nameEl.textContent = 'NO SIGNAL'; return; }
       fade(0, 350, () => {
-        if (!on) return; stopStream(); last = st.u; nameEl.textContent = st.n; audio.src = st.u; startClock();
+        if (!on) return; stopStream(); last = st.u; nameEl.textContent = st.n; audio.src = st.u; startClock(); huntRadio();
         const bad = () => { clearTimeout(failTimer); if (on && audio.dataset.cur === st.u) { stopStream(); next(); } };
         audio.dataset.cur = st.u; audio.onerror = bad; clearTimeout(failTimer); failTimer = setTimeout(() => { if (audio.paused || audio.readyState < 3) bad(); }, 8000);
         audio.play().then(() => { fade(VOL, 700); }).catch(bad);
@@ -329,9 +458,9 @@
 
   /* ---------- go ---------- */
   addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', () => { placeCoins(); });
+  addEventListener('resize', () => { placeCoins(); placeTix(); });
   renderTrophies(true); updateHud(); onScroll();
   if (!reduce) requestAnimationFrame(gaugeLoop);
-  window.addEventListener('load', () => { placeCoins(); setTimeout(placeCoins, 1200); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeCoins);
+  window.addEventListener('load', () => { placeCoins(); placeTix(); setTimeout(() => { placeCoins(); placeTix(); }, 1200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { placeCoins(); placeTix(); });
 })();
